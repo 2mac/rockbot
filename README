@@ -1,0 +1,21 @@
+rockbot
+=======
+
+Yet another extensible IRC bot written in Ruby.
+
+Why?
+----
+
+I wanted to. Get over it.
+
+How?
+----
+
+Write up a config file and run `rockbot.rb`. See [CONFIG.md](CONFIG.md) for
+details of the configuration.
+
+License
+-------
+
+rockbot is free software, released under the terms of version 1.0 of the
+Copyfree Open Innovation License. See [COPYING](COPYING) for details.
