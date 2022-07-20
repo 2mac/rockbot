@@ -39,6 +39,6 @@ APP_VERSION = '0.0.0'
 config_path = Rockbot::Config.find_config
 config = Rockbot::Config.new config_path
 
-Rockbot.init_logger(config.log_file, config.log_level)
+Rockbot.init_logger(config['log_file'], config['log_level'])
 logger = Rockbot.logger
 logger.info "#{APP_NAME} #{APP_VERSION}"

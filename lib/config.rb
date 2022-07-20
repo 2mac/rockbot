@@ -33,9 +33,11 @@ require 'json'
 
 module Rockbot
   class Config
-    attr_reader :log_level, :log_file
-    attr_reader :nick, :server, :channels
-    attr_reader :command_char
+    DEFAULT_CONFIG = {
+      'command_char' => ',',
+      'log_level' => 'INFO',
+      'log_file' => STDOUT
+    }
 
     def self.find_config
       'rockbot.json'
@@ -55,14 +57,15 @@ module Rockbot
         end
       end
 
-      @log_level = config['log_level'] || 'INFO'
-      @log_file = config['log_file'] || STDOUT
+      @data = DEFAULT_CONFIG.merge config
+    end
 
-      @nick = config['nick']
-      @server = config['server']
-      @channels = config['channels']
+    def [](key)
+      @data[key]
+    end
 
-      @command_char = config['command_char'] || ','
+    def []=(key, value)
+      @data[key] = value
     end
   end
 end
