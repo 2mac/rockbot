@@ -43,7 +43,7 @@ module Rockbot
     }
   end
 
-  def self.logger
+  def self.log
     @logger
   end
 end

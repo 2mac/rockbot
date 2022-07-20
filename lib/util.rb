@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
 ##  Copyright (C) 2022 David McMackins II
@@ -30,19 +29,12 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require_relative 'lib/log'
-require_relative 'lib/config'
-require_relative 'lib/plugin'
+require 'pathname'
 
-APP_NAME = 'rockbot'
-APP_VERSION = '0.0.0'
-
-config_path = Rockbot::Config.find_config
-config = Rockbot::Config.new config_path
-
-Rockbot.init_logger(config['log_file'], config['log_level'])
-log = Rockbot.log
-log.info "#{APP_NAME} #{APP_VERSION}"
-
-log.info 'Loading plugins...'
-Rockbot.load_plugins config
+module Rockbot
+  # Gets the absolute path in relation to rockbot.rb
+  def self.resolve_relative(path)
+    root = Pathname.new(__dir__).join('..').realpath
+    root.join(path)
+  end
+end

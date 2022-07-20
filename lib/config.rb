@@ -36,7 +36,9 @@ module Rockbot
     DEFAULT_CONFIG = {
       'command_char' => ',',
       'log_level' => 'INFO',
-      'log_file' => STDOUT
+      'log_file' => STDOUT,
+      'plugins' => [],
+      'plugin_path' => []
     }
 
     def self.find_config

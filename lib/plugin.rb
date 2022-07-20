@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
 ##  Copyright (C) 2022 David McMackins II
@@ -30,19 +29,44 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require_relative 'lib/log'
-require_relative 'lib/config'
-require_relative 'lib/plugin'
+require 'pathname'
 
-APP_NAME = 'rockbot'
-APP_VERSION = '0.0.0'
+require_relative 'config'
+require_relative 'log'
+require_relative 'util'
 
-config_path = Rockbot::Config.find_config
-config = Rockbot::Config.new config_path
+module Rockbot
+  def self.load_plugins(config)
+    config['plugins'].each { |p| load_plugin(p, config) }
+  end
 
-Rockbot.init_logger(config['log_file'], config['log_level'])
-log = Rockbot.log
-log.info "#{APP_NAME} #{APP_VERSION}"
+  def self.load_plugin(plugin_name, config)
+    loaded = false
 
-log.info 'Loading plugins...'
-Rockbot.load_plugins config
+    unless plugin_name.end_with? '.rb'
+      plugin_name += '.rb'
+    end
+
+    config['plugin_path'].each do |path|
+      dir = Pathname.new(path)
+      unless dir.absolute?
+        dir = Rockbot.resolve_relative dir
+      end
+
+      plugin_file = dir.join(plugin_name)
+      if plugin_file.file?
+        @logger.debug { "Found #{plugin_name} at #{plugin_file.to_s}" }
+
+        @logger.info "Loading #{plugin_name}..."
+        Kernel.require plugin_file
+
+        loaded = true
+        break
+      end
+    end
+
+    unless loaded
+      @logger.error "Failed to find #{plugin_name} in the plugin path"
+    end
+  end
+end
