@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
 ##  Copyright (C) 2022 David McMackins II
@@ -30,43 +29,20 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require_relative 'lib/log'
-require_relative 'lib/config'
-require_relative 'lib/irc'
-require_relative 'lib/plugin'
-require_relative 'lib/transport'
+require 'socket'
 
-APP_NAME = 'rockbot'
-APP_VERSION = '0.0.0'
+module Rockbot
+  class BasicTransport
+    def connect(host, port)
+      @socket = TCPSocket.new(host, port)
+    end
 
-config_path = Rockbot::Config.find_config
-config = Rockbot::Config.new config_path
+    def disconnect
+      @socket.close
+    end
 
-Rockbot.init_logger(config['log_file'], config['log_level'])
-log = Rockbot.log
-log.info "#{APP_NAME} #{APP_VERSION}"
-
-log.info 'Loading plugins...'
-Rockbot.load_plugins config
-
-log.info 'Registering event types...'
-Rockbot::IRC.register_events
-
-log.info 'Setting default hooks...'
-Rockbot::IRC.set_default_hooks
-
-server_info = /(?<host>.*)\/(?<port>\d*)/.match config['server']
-
-server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
-                                Rockbot::BasicTransport.new)
-server.connect config['nick']
-
-server.join config['channels']
-
-begin
-  Rockbot::IRC::Event.loop server
-rescue Interrupt => e
-  log.info 'Interrupt received. Now shutting down.'
-ensure
-  server.disconnect
+    def socket
+      @socket
+    end
+  end
 end
