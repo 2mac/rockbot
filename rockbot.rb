@@ -66,7 +66,7 @@ Rockbot.set_default_hooks
 help_cmd = Rockbot::Command.new('help') do |event, server, config|
   if event.args.nil? || (name = event.args.strip).empty?
     names = Rockbot::Command.commands.map &:name
-    response = "Supported commands: #{names.join(', ')}"
+    response = "Supported commands: #{names.sort.join(', ')}"
   else
     command = Rockbot::Command.from_name name
     if command.nil? || command.help_text.nil?
