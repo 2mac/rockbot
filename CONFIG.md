@@ -32,3 +32,5 @@ The available options are as follows:
 - `plugins` - A list of plugins to load by name or file.
 - `server` - Hostname and port number for the IRC server, formatted as
   `host/port`.
+- `secure` - If this option is set to any value but `false` or `null`, use
+  SSL/TLS encryption for the server connection.

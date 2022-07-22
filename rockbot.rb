@@ -72,8 +72,14 @@ Rockbot::Command.add_command source_cmd
 
 server_info = /(?<host>.*)\/(?<port>\d*)/.match config['server']
 
+if config['secure']
+  transport_class = Rockbot::SecureTransport
+else
+  transport_class = Rockbot::BasicTransport
+end
+
 server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
-                                  Rockbot::BasicTransport.new)
+                                  transport_class.new)
 server.connect config['nick']
 
 channels = config['channels']
