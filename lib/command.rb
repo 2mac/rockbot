@@ -1,4 +1,3 @@
-#!/usr/bin/env ruby
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
 ##  Copyright (C) 2022 David McMackins II
@@ -30,44 +29,30 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require_relative 'lib/log'
-require_relative 'lib/config'
-require_relative 'lib/event'
-require_relative 'lib/irc'
-require_relative 'lib/plugin'
-require_relative 'lib/transport'
+module Rockbot
+  class Command
+    @commands = {}
 
-APP_NAME = 'rockbot'
-APP_VERSION = '0.0.0'
+    class << self
+      def add_command(command)
+        commands[command.name] = command
+      end
 
-config_path = Rockbot::Config.find_config
-config = Rockbot::Config.new config_path
+      def from_name(name)
+        @commands[name]
+      end
+    end
 
-Rockbot.init_logger(config['log_file'], config['log_level'])
-log = Rockbot.log
-log.info "#{APP_NAME} #{APP_VERSION}"
+    attr_reader :name
 
-log.info 'Loading plugins...'
-Rockbot.load_plugins config
+    def initialize(name, &block)
+      @name = name
+      @block = block
+    end
 
-log.info 'Registering event types...'
-Rockbot.register_events
+    def call(source, channel, args)
+      @block.call(source, channel, args)
+    end
+  end
 
-log.info 'Setting default hooks...'
-Rockbot.set_default_hooks
-
-server_info = /(?<host>.*)\/(?<port>\d*)/.match config['server']
-
-server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
-                                Rockbot::BasicTransport.new)
-server.connect config['nick']
-
-server.join config['channels']
-
-begin
-  Rockbot::Event.loop(server, config)
-rescue Interrupt => e
-  log.info 'Interrupt received. Now shutting down.'
-ensure
-  server.disconnect
 end

@@ -39,37 +39,37 @@ module Rockbot
       end
 
       def connect(nick)
-        Rockbot.log.info "Connecting to server..."
+        Rockbot.log.info "Connecting to #{@host}/#{@port}..."
         @socket = @transport.connect(@host, @port)
 
-        @socket.puts "NICK #{nick}"
-        @socket.puts "USER #{nick} 0 * :rockbot"
+        self.puts "NICK #{nick}"
+        self.puts "USER #{nick} 0 * :rockbot"
 
         registered = false
         until registered
-          line = @socket.gets.chomp
-          Rockbot.log.debug "recv: #{line}"
+          line = self.gets
+          Rockbot.log.debug { "recv: #{line}" }
 
           msg = Message.new line
           case msg.command
           when 'PING'
             challenge = msg.parameters
-            Rockbot.log.debug "PONG #{challenge}"
-            @socket.puts "PONG #{challenge}"
+            self.puts "PONG #{challenge}"
           when '376' # end of MOTD
             registered = true
           end
         end
+        Rockbot.log.info "Connected!"
       end
 
-      def disconnect
+      def disconnect(message='')
         Rockbot.log.info "Disconnecting from server."
-        @socket.puts "QUIT"
+        self.puts "QUIT :#{message}"
         @transport.disconnect
       end
 
       def puts(text)
-        Rockbot.log.debug "send: #{text}"
+        Rockbot.log.debug { "send: #{text}" }
         @socket.puts text
       end
 
@@ -79,8 +79,7 @@ module Rockbot
 
       def join(channels)
         channel_string = channels.join ','
-        Rockbot.log.debug "JOIN #{channel_string}"
-        @socket.puts "JOIN #{channel_string}"
+        self.puts "JOIN #{channel_string}"
       end
     end
 
@@ -98,74 +97,17 @@ module Rockbot
       end
     end
 
-    class Event
-      @hooks = {}
-      @event_map = {}
+    class User
+      attr_reader :nick, :username, :host
 
-      class << self
-        def add_hook(type, &block)
-          unless @hooks[type]
-            @hooks[type] = []
-          end
+      def initialize(source)
+        re = /(?<nick>.*)!(?<user>.*)@(?<host>.*)/
+        matches = re.match source
 
-          @hooks[type] << block
-        end
-
-        def hooks
-          @hooks
-        end
-
-        def register(command, event_class)
-          @event_map[command] = event_class
-        end
-
-        def from_command(command)
-          @event_map[command]
-        end
-
-        def loop(server)
-          while true
-            line = server.gets
-            Rockbot.log.debug "recv: #{line}"
-
-            Thread.new do
-              msg = Message.new line
-              event_type = @event_map[msg.command]
-              if event_type
-                event = event_type.new msg
-                event.fire server
-              end
-            end
-          end
-        end
+        @nick = matches[:nick]
+        @username = matches[:user]
+        @host = matches[:host]
       end
-
-      def fire(server)
-        hooks = Event.hooks[self.class]
-        if hooks
-          hooks.each { |block| block.call(self, server) }
-        end
-      end
-    end
-
-    class PingEvent < Event
-      def self.hook(event, server)
-        server.puts "PONG #{event.challenge}"
-      end
-
-      attr_reader :challenge
-
-      def initialize(message)
-        @challenge = message.parameters
-      end
-    end
-
-    def self.register_events
-      Event.register('PING', PingEvent)
-    end
-
-    def self.set_default_hooks
-      Event.add_hook(PingEvent) { |e,s| PingEvent.hook(e,s) }
     end
 
   end
