@@ -63,11 +63,31 @@ Rockbot.register_events
 log.info 'Setting default hooks...'
 Rockbot.set_default_hooks
 
+help_cmd = Rockbot::Command.new('help') do |event, server, config|
+  if event.args.nil? || (name = event.args.strip).empty?
+    names = Rockbot::Command.commands.map &:name
+    response = "Supported commands: #{names.join(', ')}"
+  else
+    command = Rockbot::Command.from_name name
+    if command.nil? || command.help_text.nil?
+      response = "#{name} - no help text found"
+    else
+      response = "#{name} - #{command.help_text}"
+    end
+  end
+
+  server.send_notice(event.source.nick, response)
+end
+help_cmd.help_text = "lists commands or shows detailed help text of a command
+Usage: help [command]"
+Rockbot::Command.add_command help_cmd
+
 source_cmd = Rockbot::Command.new('source') do |event, server, config|
   server.send_msg(event.channel,
                   "I'm an instance of #{APP_NAME}. " +
                   "You can find my source here: #{APP_REPO}")
 end
+source_cmd.help_text = "responds with a link to the bot's source code"
 Rockbot::Command.add_command source_cmd
 
 server_info = /(?<host>.*)\/(?<port>\d*)/.match config['server']

@@ -41,8 +41,13 @@ module Rockbot
       def from_name(name)
         @commands[name]
       end
+
+      def commands
+        @commands.values
+      end
     end
 
+    attr_accessor :help_text
     attr_reader :name
 
     def initialize(name, &block)

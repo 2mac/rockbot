@@ -85,8 +85,23 @@ module Rockbot
         self.puts "JOIN #{channel_string}"
       end
 
+      # Splits a multi-line or long command into multiple commands and sends it
+      def send_cmd(prefix, content, max_len=400)
+        content.lines(chomp: true).each do |line|
+          index = 0
+          until index >= line.length
+            self.puts "#{prefix}#{line[index,max_len]}"
+            index += max_len
+          end
+        end
+      end
+
       def send_msg(target, content)
-        self.puts "PRIVMSG #{target} :#{content}"
+        send_cmd("PRIVMSG #{target} :", content)
+      end
+
+      def send_notice(target, content)
+        send_cmd("NOTICE #{target} :", content)
       end
     end
 
