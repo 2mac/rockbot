@@ -39,7 +39,8 @@ module Rockbot
       'log_file' => STDOUT,
       'ops' => [],
       'plugins' => [],
-      'plugin_path' => []
+      'plugin_path' => [],
+      'quit_msg' => ''
     }
 
     def self.find_config

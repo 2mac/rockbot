@@ -90,5 +90,5 @@ begin
 rescue Interrupt => e
   log.info 'Interrupt received. Now shutting down.'
 ensure
-  server.disconnect
+  server.disconnect config['quit_msg']
 end
