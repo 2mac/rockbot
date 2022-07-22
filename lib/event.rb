@@ -123,14 +123,15 @@ module Rockbot
 
     class MessageEvent < Event
       def self.hook(event, server, config)
-        if !event.content.empty? &&
+        if !event.action? && !event.content.empty? &&
            (event.channel[0] != '#' ||
             event.content[0] == config['command_char'])
           CommandEvent.new(event, config).fire(server, config)
         end
       end
 
-      attr_reader :source, :channel, :content
+      attr_reader :source, :channel, :content, :action
+      alias_method :action?, :action
 
       def initialize(message)
         @source = IRC::User.new message.source
@@ -140,6 +141,13 @@ module Rockbot
 
         @channel = matches[:channel]
         @content = matches[:content]
+
+        action_re = /\x01ACTION(?<content>.*)\x01/
+        matches = action_re.match @content
+        if matches
+          @content = matches[:content]
+          @action = true
+        end
       end
     end
 
