@@ -61,17 +61,21 @@ module Rockbot
         def loop(server, config)
           while true
             line = server.gets
-            Rockbot.log.debug "recv: #{line}"
+            Rockbot.log.debug { "recv: #{line}" }
 
-            Thread.new do
-              msg = IRC::Message.new line
-              event_type = @event_map[msg.command]
-              if event_type
-                event = event_type.new msg
-                event.fire(server, config)
-              end
-            end
+            process(line, server, config)
           end
+        end
+
+        def process(line, server, config)
+          Thread.new {
+            msg = IRC::Message.new line
+            event_type = @event_map[msg.command]
+            if event_type
+              event = event_type.new msg
+              event.fire(server, config)
+            end
+          }
         end
       end
 

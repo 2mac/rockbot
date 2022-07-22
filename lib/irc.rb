@@ -36,6 +36,7 @@ module Rockbot
         @host = host
         @port = port
         @transport = transport
+        @write_mutex = Thread::Mutex.new
       end
 
       def connect(nick)
@@ -69,8 +70,10 @@ module Rockbot
       end
 
       def puts(text)
-        Rockbot.log.debug { "send: #{text}" }
-        @socket.puts text
+        @write_mutex.synchronize {
+          Rockbot.log.debug { "send: #{text}" }
+          @socket.puts text
+        }
       end
 
       def gets
