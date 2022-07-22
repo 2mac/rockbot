@@ -56,9 +56,7 @@ module Rockbot
           when 'PING'
             challenge = msg.parameters
             self.puts "PONG #{challenge}"
-          when '376' # end of MOTD
-            registered = true
-          when '422' # no MOTD
+          when '376','422' # end of MOTD or no MOTD
             registered = true
           end
         end
