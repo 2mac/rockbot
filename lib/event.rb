@@ -111,7 +111,8 @@ module Rockbot
         @source = message_event.source
         @channel = message_event.channel
 
-        content = message_event.content[1..]
+        content = message_event.content
+        content = content[1..] if content.chr == config['command_char']
         re = /(?<cmd>\S+)( (?<args>.*))?/
         matches = re.match content
 
@@ -122,7 +123,9 @@ module Rockbot
 
     class MessageEvent < Event
       def self.hook(event, server, config)
-        if !event.content.empty? && event.content[0] == config['command_char']
+        if !event.content.empty? &&
+           (event.channel[0] != '#' ||
+            event.content[0] == config['command_char'])
           CommandEvent.new(event, config).fire(server, config)
         end
       end
