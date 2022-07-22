@@ -98,7 +98,7 @@ module Rockbot
     class CommandEvent < Event
       def self.hook(event, server, config)
         command = Rockbot::Command.from_name event.command
-        command.call(source, channel, args)
+        command.call(event, server, config) if command
       end
 
       attr_reader :source, :channel, :command, :args
@@ -108,7 +108,7 @@ module Rockbot
         @channel = message_event.channel
 
         content = message_event.content[1..]
-        re = /(?<cmd>\S+) (?<args>.*)/
+        re = /(?<cmd>\S+)( (?<args>.*))?/
         matches = re.match content
 
         @command = matches[:cmd]

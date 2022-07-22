@@ -31,6 +31,7 @@
 ##
 
 require_relative 'lib/log'
+require_relative 'lib/command'
 require_relative 'lib/config'
 require_relative 'lib/event'
 require_relative 'lib/irc'
@@ -39,6 +40,7 @@ require_relative 'lib/transport'
 
 APP_NAME = 'rockbot'
 APP_VERSION = '0.0.0'
+APP_REPO = 'https://github.com/2mac/rockbot'
 
 config_path = Rockbot::Config.find_config
 config = Rockbot::Config.new config_path
@@ -46,6 +48,11 @@ config = Rockbot::Config.new config_path
 Rockbot.init_logger(config['log_file'], config['log_level'])
 log = Rockbot.log
 log.info "#{APP_NAME} #{APP_VERSION}"
+
+unless config.validate
+  log.error "Errors in configuration file. See above for info."
+  exit 1
+end
 
 log.info 'Loading plugins...'
 Rockbot.load_plugins config
@@ -56,13 +63,21 @@ Rockbot.register_events
 log.info 'Setting default hooks...'
 Rockbot.set_default_hooks
 
+source_cmd = Rockbot::Command.new('source') do |event, server, config|
+  server.send_msg(event.channel,
+                  "I'm an instance of #{APP_NAME}. " +
+                  "You can find my source here: #{APP_REPO}")
+end
+Rockbot::Command.add_command source_cmd
+
 server_info = /(?<host>.*)\/(?<port>\d*)/.match config['server']
 
 server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
-                                Rockbot::BasicTransport.new)
+                                  Rockbot::BasicTransport.new)
 server.connect config['nick']
 
-server.join config['channels']
+channels = config['channels']
+server.join channels unless channels.nil? || channels.empty?
 
 begin
   Rockbot::Event.loop(server, config)

@@ -35,7 +35,7 @@ module Rockbot
 
     class << self
       def add_command(command)
-        commands[command.name] = command
+        @commands[command.name] = command
       end
 
       def from_name(name)
@@ -50,8 +50,8 @@ module Rockbot
       @block = block
     end
 
-    def call(source, channel, args)
-      @block.call(source, channel, args)
+    def call(event, server, config)
+      @block.call(event, server, config)
     end
   end
 

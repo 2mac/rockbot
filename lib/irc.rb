@@ -81,6 +81,10 @@ module Rockbot
         channel_string = channels.join ','
         self.puts "JOIN #{channel_string}"
       end
+
+      def send_msg(target, content)
+        self.puts "PRIVMSG #{target} :#{content}"
+      end
     end
 
     class Message

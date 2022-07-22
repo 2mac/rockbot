@@ -37,12 +37,13 @@ module Rockbot
       'command_char' => ',',
       'log_level' => 'INFO',
       'log_file' => STDOUT,
+      'ops' => [],
       'plugins' => [],
       'plugin_path' => []
     }
 
     def self.find_config
-      'rockbot.json'
+      Rockbot.resolve_relative 'rockbot.json'
     end
 
     def initialize(path)
@@ -60,6 +61,29 @@ module Rockbot
       end
 
       @data = DEFAULT_CONFIG.merge config
+    end
+
+    def validate
+      valid = true
+      required_params = [
+        'nick',
+        'server',
+        'command_char'
+      ]
+
+      required_params.each do |param|
+        if @data[param].nil? || @data[param].empty?
+          Rockbot.log.error "Required configuration \"#{param}\" is missing!"
+          valid = false
+        end
+      end
+
+      unless /\S+\/\d+/ =~ @data['server']
+        Rockbot.log.error "Server string is improperly formatted!"
+        valid = false
+      end
+
+      valid
     end
 
     def [](key)
