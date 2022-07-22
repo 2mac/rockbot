@@ -58,6 +58,8 @@ module Rockbot
             self.puts "PONG #{challenge}"
           when '376' # end of MOTD
             registered = true
+          when '422' # no MOTD
+            registered = true
           end
         end
         Rockbot.log.info "Connected!"
