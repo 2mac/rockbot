@@ -29,70 +29,65 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require 'json'
+require 'net/http'
 
-module Rockbot
-  class Config
-    DEFAULT_CONFIG = {
-      'command_char' => ',',
-      'log_level' => 'INFO',
-      'log_file' => STDOUT,
-      'ops' => [],
-      'plugins' => [],
-      'plugin_path' => ['plugins/'],
-      'quit_msg' => ''
-    }
+module UrlTitles
+  URL_RE = /https?:\/\/\S+\.\S+/
+  TITLE_RE = /<title>(?<title>.*)<\/title>/
 
-    def self.find_config
-      Rockbot.resolve_relative 'rockbot.json'
+  class << self
+    def title(html)
+      matches = TITLE_RE.match html
+      matches ? matches[:title] : nil
     end
 
-    def initialize(path)
-      config = {}
+    def get_uri(uri, redirect_limit=10)
+      body = nil
 
-      if File.file? path
-        file = File.open path
-        config_text = file.read
-        file.close
+      unless redirect_limit == 0
+        http = Net::HTTP.new(uri.host, uri.port)
+        http.open_timeout = 10
+        http.read_timeout = 10
+        http.use_ssl = uri.instance_of? URI::HTTPS
 
-        config = JSON.parse config_text
-        unless config.kind_of? Hash
-          raise 'Configuration is not a JSON object'
+        request = Net::HTTP::Get.new uri
+        response = http.request request
+
+        Rockbot.log.debug { "Response code #{response.code}" }
+        case response
+        when Net::HTTPSuccess
+          body = response.body
+        when Net::HTTPRedirection
+          redirect = response['location']
+          Rockbot.log.debug { "Redirected to #{redirect}" }
+          body = get_uri(URI(redirect), redirect_limit - 1)
         end
       end
 
-      @data = DEFAULT_CONFIG.merge config
+      body
     end
 
-    def validate
-      valid = true
-      required_params = [
-        'nick',
-        'server',
-        'command_char'
-      ]
+    def load
+      Rockbot::Event.add_hook(Rockbot::MessageEvent) do |event, server, config|
+        matches = URL_RE.match event.content
+        if matches
+          Rockbot.log.debug { "Captured URL #{matches[0]}" }
 
-      required_params.each do |param|
-        if @data[param].nil? || @data[param].empty?
-          Rockbot.log.error "Required configuration \"#{param}\" is missing!"
-          valid = false
+          uri = URI(matches[0])
+
+          html = get_uri uri
+          title_text = title html
+
+          if title_text
+            server.send_msg(event.channel,
+                            "(#{event.source.nick}) ^ #{title_text}")
+          end
         end
       end
 
-      unless /\S+\/\d+/ =~ @data['server']
-        Rockbot.log.error "Server string is improperly formatted!"
-        valid = false
-      end
-
-      valid
-    end
-
-    def [](key)
-      @data[key]
-    end
-
-    def []=(key, value)
-      @data[key] = value
+      Rockbot.log.info "URL Titles plugin loaded"
     end
   end
 end
+
+UrlTitles.load
