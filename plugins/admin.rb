@@ -29,91 +29,61 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require 'json'
-
-module Rockbot
-  class Config
-    DEFAULT_CONFIG = {
-      'command_char' => ',',
-      'ignore' => [],
-      'log_level' => 'INFO',
-      'log_file' => STDOUT,
-      'ops' => [],
-      'plugins' => [],
-      'plugin_path' => ['plugins/'],
-      'quit_msg' => '',
-      'retries' => 10
-    }
-
-    def self.find_config
-      Rockbot.resolve_relative 'rockbot.json'
-    end
-
-    def initialize(path)
-      config = {}
-
-      unless File.file? path
-        raise "Config file #{path} not found"
-      end
-
-      @path = path
-
-      file = File.open path
-      config_text = file.read
-      file.close
-
-      config = JSON.parse config_text
-      unless config.kind_of? Hash
-        raise 'Configuration is not a JSON object'
-      end
-
-      @data = DEFAULT_CONFIG.merge config
-
-      @write_mutex = Thread::Mutex.new
-    end
-
-    def validate
-      valid = true
-      required_params = [
-        'nick',
-        'server',
-        'command_char'
-      ]
-
-      required_params.each do |param|
-        if @data[param].nil? || @data[param].empty?
-          Rockbot.log.error "Required configuration \"#{param}\" is missing!"
-          valid = false
+module AdminPlugin
+  class << self
+    def join(event, server, config)
+      if config['ops'].include? event.source.nick
+        unless event.args.nil?
+          args = event.args.split
+          server.join args unless args.empty?
         end
       end
+    end
 
-      unless /\S+\/\d+/ =~ @data['server']
-        Rockbot.log.error "Server string is improperly formatted!"
-        valid = false
+    def part(event, server, config)
+      if config['ops'].include? event.source.nick
+        channels = event.args.nil? ? [] : event.args.split
+        channels << event.channel if channels.empty?
+        server.part channels
       end
-
-      valid
     end
 
-    def edit
-      @write_mutex.lock
-
-      yield
-
-      changed = {}
-      @data.each { |key, value| changed[key] = value if @data[key] != DEFAULT_CONFIG[key] }
-
-      File.open(@path, "w") { |f| f.puts JSON.pretty_generate(changed) }
-
-      @write_mutex.unlock
+    def nick(event, server, config)
+      if config['ops'].include? event.source.nick
+        server.set_nick event.args unless event.args.nil?
+      end
     end
 
-    def [](key)
-      @data[key]
+    def quit(event, server, config)
+      if config['ops'].include? event.source.nick
+        server.disconnect config['quit_msg']
+      end
     end
 
-    def []=(key, value)
-      @data[key] = value
+    def load
+      join_cmd = Rockbot::Command.new('join', &AdminPlugin.method(:join))
+      join_cmd.help_text = "Join one or more channels\n" +
+                           "Usage: join #channel [#channel ...]"
+      Rockbot::Command.add_command join_cmd
+
+      part_cmd = Rockbot::Command.new('part', &AdminPlugin.method(:part))
+      part_cmd.help_text = "Part one or more channels, or part the current channel\n" +
+                           "Usage: part [#channel ...]"
+      Rockbot::Command.add_command part_cmd
+
+      nick_cmd = Rockbot::Command.new('nick', &AdminPlugin.method(:nick))
+      nick_cmd.help_text = "Set my nick\n" +
+                           "Usage: nick <new_nick>"
+      Rockbot::Command.add_command nick_cmd
+
+      quit_cmd = Rockbot::Command.new('quit', &AdminPlugin.method(:quit))
+      quit_cmd.help_text = "Disconnect from IRC\n" +
+                           "Usage: quit"
+      Rockbot::Command.add_command quit_cmd
+
+      Rockbot.log.info "Admin commands plugin loaded"
     end
   end
 end
+
+AdminPlugin.load

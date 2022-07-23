@@ -32,11 +32,16 @@
 module Rockbot
   module IRC
     class Server
+      attr_accessor :nick
+      attr_reader :done
+      alias_method :done?, :done
+
       def initialize(host, port, transport)
         @host = host
         @port = port
         @transport = transport
         @write_mutex = Thread::Mutex.new
+        @done = false
       end
 
       def connect(nick)
@@ -46,8 +51,11 @@ module Rockbot
         self.puts "NICK #{nick}"
         self.puts "USER #{nick} 0 * :rockbot"
 
+        @nick = nick
+
         registered = false
-        until registered
+        fail_reason = nil
+        until registered || fail_reason
           line = self.gets
           Rockbot.log.debug { "recv: #{line}" }
 
@@ -58,14 +66,23 @@ module Rockbot
             self.puts "PONG #{challenge}"
           when '376','422' # end of MOTD or no MOTD
             registered = true
+          when '433' # nick in use
+            fail_reason = 'Nick already in use'
           end
         end
-        Rockbot.log.info "Connected!"
+
+        if registered
+          Rockbot.log.info "Connected!"
+        else
+          @transport.disconnect
+          raise fail_reason
+        end
       end
 
       def disconnect(message='')
         Rockbot.log.info "Disconnecting from server."
         self.puts "QUIT :#{message}"
+        @done = true
         @transport.disconnect
       end
 
@@ -85,6 +102,11 @@ module Rockbot
         self.puts "JOIN #{channel_string}"
       end
 
+      def part(channels)
+        channel_string = channels.join ','
+        self.puts "PART #{channel_string}"
+      end
+
       # Splits a multi-line or long command into multiple commands and sends it
       def send_cmd(prefix, content, max_len=400)
         content.lines(chomp: true).each do |line|
@@ -102,6 +124,10 @@ module Rockbot
 
       def send_notice(target, content)
         send_cmd("NOTICE #{target} :", content)
+      end
+
+      def set_nick(nick)
+        self.puts "NICK #{nick}"
       end
     end
 

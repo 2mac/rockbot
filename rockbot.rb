@@ -106,6 +106,7 @@ end
 
 done = false
 max_retries = config['retries']
+try = 0
 begin
   server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
                                     transport_class.new)
@@ -121,9 +122,11 @@ begin
     log.info 'Interrupt received. Now shutting down.'
     done = true
   ensure
-    server.disconnect config['quit_msg']
+    done = done || server.done?
+    server.disconnect(config['quit_msg']) unless server.done?
   end
 rescue => e
+  break if done
   log.error e
 
   try += 1

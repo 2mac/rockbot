@@ -59,7 +59,7 @@ module Rockbot
         end
 
         def loop(server, config)
-          while true
+          until server.done?
             line = server.gets
             Rockbot.log.debug { "recv: #{line}" }
 
@@ -95,12 +95,26 @@ module Rockbot
 
     class JoinEvent < Event
       def self.hook(event, server, config)
-        Rockbot.log.info "Joined #{event.channel}"
+        Rockbot.log.info "Joined #{event.channel}" if event.source.nick == server.nick
       end
 
-      attr_reader :channel
+      attr_reader :source, :channel
 
       def initialize(message)
+        @source = IRC::User.new message.source
+        @channel = message.parameters
+      end
+    end
+
+    class PartEvent < Event
+      def self.hook(event, server, config)
+        Rockbot.log.info "Left #{event.channel}" if event.source.nick == server.nick
+      end
+
+      attr_reader :source, :channel
+
+      def initialize(message)
+        @source = IRC::User.new message.source
         @channel = message.parameters
       end
     end
@@ -161,6 +175,25 @@ module Rockbot
       end
     end
 
+    class NickEvent < Event
+      def self.hook(event, server, config)
+        if event.source.nick == server.nick
+          Rockbot.log.info "Nick changed to #{event.nick}"
+          server.nick = event.nick
+        end
+      end
+
+      attr_reader :source, :nick
+
+      def initialize(message)
+        @source = IRC::User.new message.source
+
+        re = /:?(?<nick>.*)/
+        matches = re.match message.parameters
+        @nick = matches[:nick]
+      end
+    end
+
     class PingEvent < Event
       def self.hook(event, server, config)
         server.puts "PONG #{event.challenge}"
@@ -175,6 +208,8 @@ module Rockbot
 
     def self.register_events
       Event.register('JOIN', JoinEvent)
+      Event.register('NICK', NickEvent)
+      Event.register('PART', PartEvent)
       Event.register('PING', PingEvent)
       Event.register('PRIVMSG', MessageEvent)
     end
