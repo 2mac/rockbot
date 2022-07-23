@@ -19,6 +19,7 @@ finds first:
 
 The available options are as follows:
 
+- `auth` - Authentication info. See below for details.
 - `channels` - A list of channels to join.
 - `command_char` - The character by which rockbot will recognize a command
   originating from IRC. (default: `,`)
@@ -37,3 +38,18 @@ The available options are as follows:
   `host/port`.
 - `secure` - If this option is set to any value but `false` or `null`, use
   SSL/TLS encryption for the server connection.
+
+`auth`
+------
+
+The `auth` option is used for logging into networks with nick
+registration. rockbot currently supports the SASL PLAIN mechanism. It is set up
+as follows:
+
+    {
+        "auth": {
+            "type": "sasl",
+            "user": "<username>",
+            "pass": "<secret_password>"
+        }
+    }

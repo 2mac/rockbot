@@ -29,6 +29,8 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
+require 'base64'
+
 module Rockbot
   module IRC
     class Server
@@ -44,10 +46,24 @@ module Rockbot
         @done = false
       end
 
-      def connect(nick)
+      def connect(config)
         Rockbot.log.info "Connecting to #{@host}/#{@port}..."
         @socket = @transport.connect(@host, @port)
 
+        nick = config['nick']
+
+        auth = nil
+        if config['auth']
+          case config['auth']['type']
+          when 'sasl'
+            auth = :sasl
+            sasl_user = config['auth']['user']
+            sasl_pass = config['auth']['pass']
+            auth_str = Base64.encode64 "\x00#{sasl_user}\x00#{sasl_pass}"
+          end
+        end
+
+        self.puts "CAP REQ sasl" if auth == :sasl
         self.puts "NICK #{nick}"
         self.puts "USER #{nick} 0 * :rockbot"
 
@@ -61,6 +77,13 @@ module Rockbot
 
           msg = Message.new line
           case msg.command
+          when 'AUTHENTICATE'
+            self.puts "AUTHENTICATE #{auth_str}"
+          when 'CAP'
+            args = msg.parameters.split
+            if args[1] == 'ACK' && /:?sasl/ =~ args[2]
+              self.puts "AUTHENTICATE PLAIN"
+            end
           when 'PING'
             challenge = msg.parameters
             self.puts "PONG #{challenge}"
@@ -68,6 +91,10 @@ module Rockbot
             registered = true
           when '433' # nick in use
             fail_reason = 'Nick already in use'
+          when '903' # sasl success
+            self.puts "CAP END"
+          when '904'
+            fail_reason = 'SASL auth failed'
           end
         end
 

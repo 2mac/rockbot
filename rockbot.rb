@@ -110,7 +110,7 @@ try = 0
 begin
   server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
                                     transport_class.new)
-  server.connect config['nick']
+  server.connect config
   try = 0
 
   channels = config['channels']
