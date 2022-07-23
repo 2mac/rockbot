@@ -80,10 +80,16 @@ module Rockbot
       end
 
       def fire(server, config)
-        hooks = Event.hooks[self.class]
-        if hooks
-          hooks.each { |block| block.call(self, server, config) }
+        if should_process?(server, config)
+          hooks = Event.hooks[self.class]
+          if hooks
+            hooks.each { |block| block.call(self, server, config) }
+          end
         end
+      end
+
+      def should_process?(server, config)
+        true
       end
     end
 
@@ -148,6 +154,10 @@ module Rockbot
           @content = matches[:content]
           @action = true
         end
+      end
+
+      def should_process?(server, config)
+        !config['ignore'].include? source.nick
       end
     end
 

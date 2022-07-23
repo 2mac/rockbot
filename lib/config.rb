@@ -35,6 +35,7 @@ module Rockbot
   class Config
     DEFAULT_CONFIG = {
       'command_char' => ',',
+      'ignore' => [],
       'log_level' => 'INFO',
       'log_file' => STDOUT,
       'ops' => [],
