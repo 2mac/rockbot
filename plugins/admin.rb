@@ -32,30 +32,70 @@
 module AdminPlugin
   class << self
     def join(event, server, config)
-      if config['ops'].include? event.source.nick
-        unless event.args.nil?
-          args = event.args.split
-          server.join args unless args.empty?
-        end
+      if Rockbot.is_operator(config, event.source.nick)
+        args = event.args.split
+        server.join args unless args.empty?
+
+        config.edit { config['channels'] |= args }
       end
     end
 
     def part(event, server, config)
-      if config['ops'].include? event.source.nick
-        channels = event.args.nil? ? [] : event.args.split
+      if Rockbot.is_operator(config, event.source.nick)
+        channels = event.args.split
         channels << event.channel if channels.empty?
         server.part channels
+
+        config.edit do
+          channels.each do |parted|
+            config['channels'].delete_if { |c| c.casecmp? parted }
+          end
+        end
       end
     end
 
     def nick(event, server, config)
-      if config['ops'].include? event.source.nick
-        server.set_nick event.args unless event.args.nil?
+      if Rockbot.is_operator(config, event.source.nick)
+        server.set_nick event.args unless event.args.empty?
+      end
+    end
+
+    def op(event, server, config)
+      if Rockbot.is_operator(config, event.source.nick)
+        args = event.args.split
+        unless args.empty?
+          config.edit do
+            args.each do |arg|
+              unless config['ops'].include? arg
+                Rockbot.log.info "Adding #{arg} as a new operator"
+                config['ops'] << arg
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def deop(event, server, config)
+      if Rockbot.is_operator(config, event.source.nick)
+        args = event.args.split
+        unless args.empty?
+          config.edit do
+            args.each do |arg|
+              unless arg == event.source.nick
+                Rockbot.log.info "Removing #{arg} from operators"
+                config['ops'].delete_if { |op| op.casecmp? arg }
+              else
+                server.send_msg(event.channel, "You wouldn't want to deop yourself...")
+              end
+            end
+          end
+        end
       end
     end
 
     def quit(event, server, config)
-      if config['ops'].include? event.source.nick
+      if Rockbot.is_operator(config, event.source.nick)
         server.disconnect config['quit_msg']
       end
     end
@@ -75,6 +115,16 @@ module AdminPlugin
       nick_cmd.help_text = "Set my nick\n" +
                            "Usage: nick <new_nick>"
       Rockbot::Command.add_command nick_cmd
+
+      op_cmd = Rockbot::Command.new('op', &AdminPlugin.method(:op))
+      op_cmd.help_text = "Add new operators to the ops list\n" +
+                         "Usage: op [nick ...]"
+      Rockbot::Command.add_command op_cmd
+
+      deop_cmd = Rockbot::Command.new('deop', &AdminPlugin.method(:deop))
+      deop_cmd.help_text = "Removes operators from the ops list\n" +
+                           "Usage: deop [nick ...]"
+      Rockbot::Command.add_command deop_cmd
 
       quit_cmd = Rockbot::Command.new('quit', &AdminPlugin.method(:quit))
       quit_cmd.help_text = "Disconnect from IRC\n" +

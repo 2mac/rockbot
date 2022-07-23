@@ -37,4 +37,8 @@ module Rockbot
     root = Pathname.new(__dir__).join('..').realpath
     root.join(path)
   end
+
+  def self.is_operator(config, nick)
+    config['ops'].each { |op| return true if op.casecmp? nick }
+  end
 end

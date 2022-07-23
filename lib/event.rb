@@ -137,7 +137,7 @@ module Rockbot
         matches = re.match content
 
         @command = matches[:cmd]
-        @args = matches[:args]
+        @args = matches[:args] || ''
       end
     end
 
