@@ -40,7 +40,8 @@ module Rockbot
       'ops' => [],
       'plugins' => [],
       'plugin_path' => ['plugins/'],
-      'quit_msg' => ''
+      'quit_msg' => '',
+      'retries' => 10
     }
 
     def self.find_config

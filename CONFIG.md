@@ -30,6 +30,8 @@ The available options are as follows:
 - `nick` - IRC nick for this instance of rockbot.
 - `plugin_path` - A list of directories in which to search for plugins.
 - `plugins` - A list of plugins to load by name or file.
+- `retries` - Number of times to reconnect to the server after an error.
+  (default: 10)
 - `server` - Hostname and port number for the IRC server, formatted as
   `host/port`.
 - `secure` - If this option is set to any value but `false` or `null`, use

@@ -104,17 +104,37 @@ else
   transport_class = Rockbot::BasicTransport
 end
 
-server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
-                                  transport_class.new)
-server.connect config['nick']
-
-channels = config['channels']
-server.join channels unless channels.nil? || channels.empty?
-
+done = false
+max_retries = config['retries']
 begin
-  Rockbot::Event.loop(server, config)
-rescue Interrupt => e
-  log.info 'Interrupt received. Now shutting down.'
-ensure
-  server.disconnect config['quit_msg']
-end
+  server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
+                                    transport_class.new)
+  server.connect config['nick']
+  try = 0
+
+  channels = config['channels']
+  server.join channels unless channels.nil? || channels.empty?
+
+  begin
+    Rockbot::Event.loop(server, config)
+  rescue Interrupt => e
+    log.info 'Interrupt received. Now shutting down.'
+    done = true
+  ensure
+    server.disconnect config['quit_msg']
+  end
+rescue => e
+  log.error e
+
+  try += 1
+  if try <= max_retries
+    delay = try * 10
+    log.info "Reconnecting in #{delay} seconds..."
+
+    sleep delay
+    retry
+  else
+    log.fatal "Too many failed attempts. Exiting now."
+    exit 1
+  end
+end until done
