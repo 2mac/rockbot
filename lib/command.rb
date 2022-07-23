@@ -39,7 +39,11 @@ module Rockbot
       end
 
       def from_name(name)
-        @commands[name]
+        @commands.each do |key, command|
+          return command if name == key || command.aliases.include?(name)
+        end
+
+        nil
       end
 
       def commands
@@ -48,11 +52,12 @@ module Rockbot
     end
 
     attr_accessor :help_text
-    attr_reader :name
+    attr_reader :name, :aliases
 
-    def initialize(name, &block)
+    def initialize(name, aliases=[], &block)
       @name = name
       @block = block
+      @aliases = aliases
     end
 
     def call(event, server, config)

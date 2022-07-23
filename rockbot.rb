@@ -63,7 +63,7 @@ Rockbot.register_events
 log.info 'Setting default hooks...'
 Rockbot.set_default_hooks
 
-help_cmd = Rockbot::Command.new('help') do |event, server, config|
+help_cmd = Rockbot::Command.new('help', ['h']) do |event, server, config|
   if event.args.nil? || (name = event.args.strip).empty?
     names = Rockbot::Command.commands.map &:name
     response = "Supported commands: #{names.sort.join(', ')}"
@@ -83,7 +83,8 @@ Usage: help [command]"
 Rockbot::Command.add_command help_cmd
 
 source_cmd = Rockbot::Command.new('source') do |event, server, config|
-  server.send_msg(event.channel,
+  target = event.channel.start_with?('#') ? event.channel : event.source.nick
+  server.send_msg(target,
                   "I'm an instance of #{APP_NAME}. " +
                   "You can find my source here: #{APP_REPO}")
 end
