@@ -50,7 +50,7 @@ log = Rockbot.log
 log.info "#{APP_NAME} #{APP_VERSION}"
 
 unless config.validate
-  log.error "Errors in configuration file. See above for info."
+  log.fatal "Errors in configuration file. See above for info."
   exit 1
 end
 
