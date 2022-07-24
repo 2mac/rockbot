@@ -54,9 +54,6 @@ unless config.validate
   exit 1
 end
 
-log.info 'Loading plugins...'
-Rockbot.load_plugins config
-
 log.info 'Registering event types...'
 Rockbot.register_events
 
@@ -95,6 +92,9 @@ source_cmd = Rockbot::Command.new('source') do |event, server, config|
 end
 source_cmd.help_text = "responds with a link to the bot's source code"
 Rockbot::Command.add_command source_cmd
+
+log.info 'Loading plugins...'
+Rockbot.load_plugins config
 
 server_info = /(?<host>.*)\/(?<port>\d*)/.match config['server']
 
