@@ -38,7 +38,7 @@ module UrlTitles
   class << self
     def title(html)
       matches = TITLE_RE.match html
-      matches ? matches[:title].gsub(/\R/,'').strip : nil
+      matches ? matches[:title].gsub(/\R/,' ').strip : nil
     end
 
     def get_uri(uri, redirect_limit=10)
