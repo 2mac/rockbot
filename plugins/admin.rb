@@ -32,7 +32,7 @@
 module AdminPlugin
   class << self
     def join(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         args = event.args.split
         server.join args unless args.empty?
 
@@ -41,7 +41,7 @@ module AdminPlugin
     end
 
     def part(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         channels = event.args.split
         channels << event.channel if channels.empty?
         server.part channels
@@ -55,13 +55,13 @@ module AdminPlugin
     end
 
     def nick(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         server.set_nick event.args unless event.args.empty?
       end
     end
 
     def op(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         args = event.args.split
         unless args.empty?
           config.edit do
@@ -77,7 +77,7 @@ module AdminPlugin
     end
 
     def deop(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         args = event.args.split
         unless args.empty?
           config.edit do
@@ -95,7 +95,7 @@ module AdminPlugin
     end
 
     def ignore(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         args = event.args.split
         unless args.empty?
           config.edit do
@@ -113,7 +113,7 @@ module AdminPlugin
     end
 
     def unignore(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         args = event.args.split
         unless args.empty?
           config.edit do
@@ -127,7 +127,7 @@ module AdminPlugin
     end
 
     def quit(event, server, config)
-      if Rockbot.is_operator(config, event.source.nick)
+      if Rockbot.operator?(config, event.source.nick)
         server.disconnect config['quit_msg']
       end
     end

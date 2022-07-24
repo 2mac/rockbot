@@ -38,7 +38,7 @@ module Rockbot
     root.join(path)
   end
 
-  def self.is_operator(config, nick)
+  def self.operator?(config, nick)
     config['ops'].each { |op| return true if op.casecmp? nick }
   end
 end
