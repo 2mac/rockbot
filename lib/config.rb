@@ -35,6 +35,7 @@ module Rockbot
   class Config
     DEFAULT_CONFIG = {
       'command_char' => ',',
+      'database' => 'rockbot.sqlite',
       'ignore' => [],
       'log_level' => 'INFO',
       'ops' => [],

@@ -33,6 +33,7 @@
 require_relative 'lib/log'
 require_relative 'lib/command'
 require_relative 'lib/config'
+require_relative 'lib/database'
 require_relative 'lib/event'
 require_relative 'lib/irc'
 require_relative 'lib/plugin'
@@ -51,6 +52,15 @@ log.info "#{APP_NAME} #{APP_VERSION}"
 
 unless config.validate
   log.fatal "Errors in configuration file. See above for info."
+  exit 1
+end
+
+begin
+  log.info "Loading database..."
+  Rockbot.init_db config
+rescue => e
+  log.fatal "Error loading database"
+  log.fatal e
   exit 1
 end
 
@@ -107,6 +117,7 @@ end
 done = false
 max_retries = config['retries']
 try = 0
+exit_code = 0
 begin
   server = Rockbot::IRC::Server.new(server_info[:host], server_info[:port].to_i,
                                     transport_class.new)
@@ -138,6 +149,10 @@ rescue => e
     retry
   else
     log.fatal "Too many failed attempts. Exiting now."
-    exit 1
+    exit_code = 1
+    done = true
   end
 end until done
+
+Rockbot.database.close
+exit exit_code

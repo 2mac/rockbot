@@ -162,7 +162,7 @@ module Rockbot
         @channel = matches[:channel]
         @content = matches[:content]
 
-        action_re = /\x01ACTION(?<content>.*)\x01/
+        action_re = /\x01ACTION (?<content>.*)\x01/
         matches = action_re.match @content
         if matches
           @content = matches[:content]

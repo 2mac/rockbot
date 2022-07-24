@@ -29,60 +29,16 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require 'date'
-require 'pathname'
+require 'sqlite3'
+
+require_relative 'util'
 
 module Rockbot
-  def self.datetime_diff(from, to)
-    days = (to - from).to_i
-    hours = to.hour - from.hour
-    minutes = to.minute - from.minute
-    seconds = to.second - from.second
-    Rockbot.log.debug "#{days} #{hours} #{minutes} #{seconds}"
-
-    minutes -= 1 if seconds < 0
-
-    if minutes < 0
-      hours -= 1
-      minutes += 60
-    end
-
-    if hours < 0
-      days -= 1
-      hours += 24
-    end
-
-    case days
-    when 0
-      if hours >= 1
-        response = hours == 1 ? "an hour" : "#{hours} hours"
-        response << " and #{minutes} minutes" if minutes > 0
-      else
-        response = minutes >= 1 ? "#{minutes} minutes" : "less than a minute"
-      end
-    when 1..6
-      response = days == 1 ? "a day" : "#{days} days"
-      response << " and #{hours} hours" if hours > 0
-    else
-      weeks = days / 7
-      wdays = days % 7
-      response = weeks == 1 ? "a week" : "#{weeks} weeks"
-      if wdays > 0
-        response << " and "
-        response << wdays == 1 ? "a day" : "#{wdays} days"
-      end
-    end
-
-    response
+  def self.init_db(config)
+    @database = SQLite3::Database.new resolve_relative(config['database']).to_s
   end
 
-  # Gets the absolute path in relation to rockbot.rb
-  def self.resolve_relative(path)
-    root = Pathname.new(__dir__).join('..').realpath
-    root.join(path)
-  end
-
-  def self.operator?(config, nick)
-    config['ops'].each { |op| return true if op.casecmp? nick }
+  def self.database
+    @database
   end
 end
