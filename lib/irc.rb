@@ -110,7 +110,15 @@ module Rockbot
         Rockbot.log.info "Disconnecting from server."
         self.puts "QUIT :#{message}"
         @done = true
-        @transport.disconnect
+
+        begin
+          loop do
+            line = self.gets
+            Rockbot.log.debug { "recv: #{line}" }
+          end
+        ensure
+          @transport.disconnect
+        end
       end
 
       def puts(text)

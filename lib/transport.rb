@@ -51,11 +51,12 @@ module Rockbot
     def connect(host, port)
       @socket = TCPSocket.new(host, port)
       @ssl = OpenSSL::SSL::SSLSocket.new @socket
+      @ssl.sync_close = true
       @ssl.connect
     end
 
     def disconnect
-      @socket.close
+      @ssl.close
     end
 
     def socket
