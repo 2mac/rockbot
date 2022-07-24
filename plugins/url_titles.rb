@@ -33,12 +33,12 @@ require 'net/http'
 
 module UrlTitles
   URL_RE = /https?:\/\/\S+\.\S+/
-  TITLE_RE = /<title>(?<title>.*)<\/title>/
+  TITLE_RE = /<title>(?<title>.*)<\/title>/m
 
   class << self
     def title(html)
       matches = TITLE_RE.match html
-      matches ? matches[:title].strip : nil
+      matches ? matches[:title].gsub(/\R/,'').strip : nil
     end
 
     def get_uri(uri, redirect_limit=10)
