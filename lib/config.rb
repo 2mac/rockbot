@@ -37,7 +37,6 @@ module Rockbot
       'command_char' => ',',
       'ignore' => [],
       'log_level' => 'INFO',
-      'log_file' => STDOUT,
       'ops' => [],
       'plugins' => [],
       'plugin_path' => ['plugins/'],
@@ -99,11 +98,7 @@ module Rockbot
       @write_mutex.lock
 
       yield
-
-      changed = {}
-      @data.each { |key, value| changed[key] = value if @data[key] != DEFAULT_CONFIG[key] }
-
-      File.open(@path, "w") { |f| f.puts JSON.pretty_generate(changed) }
+      File.open(@path, "w") { |f| f.puts JSON.pretty_generate(@data) }
 
       @write_mutex.unlock
     end

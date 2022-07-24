@@ -33,6 +33,7 @@ require 'logger'
 
 module Rockbot
   def self.init_logger(file, level)
+    file = STDOUT unless file
     @logger = Logger.new file
     @logger.level = level
     @logger.formatter = proc { |severity, time, progname, msg|

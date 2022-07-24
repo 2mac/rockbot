@@ -94,6 +94,38 @@ module AdminPlugin
       end
     end
 
+    def ignore(event, server, config)
+      if Rockbot.is_operator(config, event.source.nick)
+        args = event.args.split
+        unless args.empty?
+          config.edit do
+            args.each do |arg|
+              unless arg == event.source.nick
+                Rockbot.log.info "Adding #{arg} to ignore list"
+                config['ignore'] << arg
+              else
+                server.send_msg(event.channel, "You wouldn't want to ignore yourself...")
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def unignore(event, server, config)
+      if Rockbot.is_operator(config, event.source.nick)
+        args = event.args.split
+        unless args.empty?
+          config.edit do
+            args.each do |arg|
+              Rockbot.log.info "Removing #{arg} from ignore list"
+              config['ignore'].delete_if { |nick| nick.casecmp? arg }
+            end
+          end
+        end
+      end
+    end
+
     def quit(event, server, config)
       if Rockbot.is_operator(config, event.source.nick)
         server.disconnect config['quit_msg']
@@ -118,13 +150,23 @@ module AdminPlugin
 
       op_cmd = Rockbot::Command.new('op', &AdminPlugin.method(:op))
       op_cmd.help_text = "Add new operators to the ops list\n" +
-                         "Usage: op [nick ...]"
+                         "Usage: op <nick> [...]"
       Rockbot::Command.add_command op_cmd
 
       deop_cmd = Rockbot::Command.new('deop', &AdminPlugin.method(:deop))
       deop_cmd.help_text = "Removes operators from the ops list\n" +
-                           "Usage: deop [nick ...]"
+                           "Usage: deop <nick> [...]"
       Rockbot::Command.add_command deop_cmd
+
+      ignore_cmd = Rockbot::Command.new('ignore', &AdminPlugin.method(:ignore))
+      ignore_cmd.help_text = "Adds users to the ignore list\n" +
+                             "Usage: ignore <nick> [...]"
+      Rockbot::Command.add_command ignore_cmd
+
+      unignore_cmd = Rockbot::Command.new('unignore', &AdminPlugin.method(:unignore))
+      unignore_cmd.help_text = "Remove users from the ignore list\n" +
+                               "Usage: unignore <nick> [...]"
+      Rockbot::Command.add_command unignore_cmd
 
       quit_cmd = Rockbot::Command.new('quit', &AdminPlugin.method(:quit))
       quit_cmd.help_text = "Disconnect from IRC\n" +
