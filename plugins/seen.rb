@@ -32,17 +32,17 @@
 module SeenPlugin
   class << self
     def setup_db
-      db = Rockbot.database
-      db.execute "create table if not exists seen_meta ( version int );"
+      Rockbot.database do |db|
+        db.execute "create table if not exists seen_meta ( version int );"
 
-      schema_version = 0
-      results = db.query "select version from seen_meta"
-      results.each { |row| schema_version = row[0] }
-      results.close
+        schema_version = 0
+        results = db.query "select version from seen_meta"
+        results.each { |row| schema_version = row[0] }
+        results.close
 
-      setup_sql = [
-        # version 1
-        "insert into seen_meta values (1);
+        setup_sql = [
+          # version 1
+          "insert into seen_meta values (1);
 create table seen (
   nick text not null,
   channel text not null,
@@ -50,10 +50,11 @@ create table seen (
   time text,
   primary key (nick,channel) on conflict replace
 );"
-      ]
+        ]
 
-      setup_sql[schema_version..].each do |sql|
-        sql.split(';').each { |stmt| db.execute stmt }
+        setup_sql[schema_version..].each do |sql|
+          sql.split(';').each { |stmt| db.execute stmt }
+        end
       end
     end
 
@@ -62,10 +63,12 @@ create table seen (
         content = event.content
         content = "* #{event.source.nick} #{content}" if event.action?
 
-        Rockbot.database.execute(
-          "insert into seen values (?,?,?,datetime('now'))",
-          event.source.nick, event.channel, content
-        )
+        Rockbot.database do |db|
+          db.execute(
+            "insert into seen values (?,?,?,datetime('now'))",
+            event.source.nick, event.channel, content
+          )
+        end
       end
     end
 
@@ -80,21 +83,25 @@ create table seen (
         elsif nick.casecmp? server.nick
           server.send_msg(channel, "#{event.source.nick}: That's me!")
         else
-          results = Rockbot.database.query(
-            "select message, time from seen where nick = ? and channel = ?",
-            nick, channel
-          )
-          result = results.next
-          if result
-            message = result[0]
-            time = DateTime.strptime(result[1], '%Y-%m-%d %H:%M:%S')
-            diff = Rockbot.datetime_diff(time, DateTime.now.new_offset('+00:00'))
+          response = ''
+          Rockbot.database do |db|
+            results = db.query(
+              "select message, time from seen where nick = ? and channel = ?",
+              nick, channel
+            )
 
-            response = "#{nick} was last seen #{diff} ago saying: #{message}"
-          else
-            response = "I haven't seen #{nick} talking in this channel."
+            result = results.next
+            if result
+              message = result[0]
+              time = DateTime.strptime(result[1], '%Y-%m-%d %H:%M:%S')
+              diff = Rockbot.datetime_diff(time, DateTime.now.new_offset('+00:00'))
+
+              response = "#{nick} was last seen #{diff} ago saying: #{message}"
+            else
+              response = "I haven't seen #{nick} talking in this channel."
+            end
+            results.close
           end
-          results.close
 
           server.send_msg(channel, response)
         end

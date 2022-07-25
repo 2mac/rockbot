@@ -36,9 +36,16 @@ require_relative 'util'
 module Rockbot
   def self.init_db(config)
     @database = SQLite3::Database.new resolve_relative(config['database']).to_s
+    @write_mutex = Thread::Mutex.new
   end
 
   def self.database
-    @database
+    @write_mutex.lock
+    yield @database
+    @write_mutex.unlock
+  end
+
+  def self.close_db
+    @database.close
   end
 end

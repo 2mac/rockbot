@@ -154,5 +154,5 @@ rescue => e
   end
 end until done
 
-Rockbot.database.close
+Rockbot.close_db
 exit exit_code
