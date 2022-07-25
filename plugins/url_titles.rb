@@ -42,7 +42,7 @@ module UrlTitles
     end
 
     def get_uri(uri, redirect_limit=10)
-      body = nil
+      result = nil
 
       unless redirect_limit == 0
         http = Net::HTTP.new(uri.host, uri.port)
@@ -56,15 +56,15 @@ module UrlTitles
         Rockbot.log.debug { "Response code #{response.code}" }
         case response
         when Net::HTTPSuccess
-          body = response.body
+          result = response
         when Net::HTTPRedirection
           redirect = response['location']
           Rockbot.log.debug { "Redirected to #{redirect}" }
-          body = get_uri(URI(redirect), redirect_limit - 1)
+          result = get_uri(URI(redirect), redirect_limit - 1)
         end
       end
 
-      body
+      result
     end
 
     def load
@@ -75,8 +75,10 @@ module UrlTitles
 
           uri = URI(matches[0])
 
-          html = get_uri uri
-          title_text = title html
+          response = get_uri uri
+          type = response['Content-Type']
+          Rockbot.log.debug { "type=#{type}" }
+          title_text = title response.body if type == 'text/html'
 
           if title_text
             server.send_msg(event.channel,
