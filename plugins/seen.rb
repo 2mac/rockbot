@@ -66,7 +66,7 @@ create table seen (
         Rockbot.database do |db|
           db.execute(
             "insert into seen values (?,?,?,datetime('now'))",
-            event.source.nick, event.channel, content
+            event.source.nick.downcase, event.channel.downcase, content
           )
         end
       end
@@ -87,7 +87,7 @@ create table seen (
           Rockbot.database do |db|
             results = db.query(
               "select message, time from seen where nick = ? and channel = ?",
-              nick, channel
+              nick.downcase, channel.downcase
             )
 
             result = results.next
