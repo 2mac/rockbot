@@ -38,7 +38,7 @@ module Rockbot
     hours = to.hour - from.hour
     minutes = to.minute - from.minute
     seconds = to.second - from.second
-    Rockbot.log.debug "#{days} #{hours} #{minutes} #{seconds}"
+    Rockbot.log.debug { "#{days} #{hours} #{minutes} #{seconds}" }
 
     minutes -= 1 if seconds < 0
 
