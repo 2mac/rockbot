@@ -212,7 +212,7 @@ create table tell_notify (
     def load
       setup_db
 
-      Rockbot::Event.add_hook(Rockbot::MessageEvent, &TellPlugin.method(:check_notify))
+      Rockbot::MessageEvent.add_hook &TellPlugin.method(:check_notify)
 
       tell_cmd = Rockbot::Command.new('tell', &TellPlugin.method(:tell))
       tell_cmd.help_text = "Saves a message to tell someone when they return to the channel\n" +

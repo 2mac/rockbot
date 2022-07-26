@@ -68,7 +68,7 @@ module UrlTitles
     end
 
     def load
-      Rockbot::Event.add_hook(Rockbot::MessageEvent) do |event, server, config|
+      Rockbot::MessageEvent.add_hook do |event, server, config|
         matches = URL_RE.match event.content
         if matches
           Rockbot.log.debug { "Captured URL #{matches[0]}" }

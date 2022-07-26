@@ -34,20 +34,20 @@ require_relative 'irc'
 
 module Rockbot
     class Event
-      @hooks = {}
+      HOOKS = {}
       @event_map = {}
 
       class << self
-        def add_hook(type, &block)
-          unless @hooks[type]
-            @hooks[type] = []
+        def add_hook(&block)
+          unless HOOKS[self]
+            HOOKS[self] = []
           end
 
-          @hooks[type] << block
+          HOOKS[self] << block
         end
 
         def hooks
-          @hooks
+          HOOKS[self]
         end
 
         def register(command, event_class)
@@ -81,7 +81,7 @@ module Rockbot
 
       def fire(server, config)
         if should_process?(server, config)
-          hooks = Event.hooks[self.class]
+          hooks = HOOKS[self.class]
           if hooks
             hooks.each { |block| block.call(self, server, config) }
           end
@@ -231,7 +231,7 @@ module Rockbot
       events_with_hook = events.select { |c| c.methods.include? :hook }
 
       events_with_hook.each do |event_class|
-        Event.add_hook(event_class, &event_class.method(:hook))
+        event_class.add_hook &event_class.method(:hook)
       end
     end
 

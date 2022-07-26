@@ -111,7 +111,7 @@ create table seen (
     def load
       setup_db
 
-      Rockbot::Event.add_hook(Rockbot::MessageEvent, &SeenPlugin.method(:receive))
+      Rockbot::MessageEvent.add_hook &SeenPlugin.method(:receive)
 
       seen_cmd = Rockbot::Command.new('seen', &SeenPlugin.method(:query))
       seen_cmd.help_text = "Queries for the last time a user was seen speaking\n" +
