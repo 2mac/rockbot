@@ -46,6 +46,7 @@ module Rockbot
   end
 
   def self.close_db
+    @database.interrupt
     @database.close
   end
 end

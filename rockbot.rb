@@ -154,5 +154,10 @@ rescue => e
   end
 end until done
 
-Rockbot.close_db
+begin
+  Rockbot.close_db
+rescue
+  # shut up and be done
+end
+
 exit exit_code

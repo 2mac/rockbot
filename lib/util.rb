@@ -34,6 +34,9 @@ require 'pathname'
 
 module Rockbot
   def self.datetime_diff(from, to)
+    from = from.new_offset('+00:00')
+    to = to.new_offset('+00:00')
+
     days = (to - from).to_i
     hours = to.hour - from.hour
     minutes = to.minute - from.minute
