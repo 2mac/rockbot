@@ -79,7 +79,7 @@ module UrlTitles
           if response
             type = response['Content-Type']
             Rockbot.log.debug { "type=#{type}" }
-            title_text = title response.body if type == 'text/html'
+            title_text = title response.body if type.include? 'text/html'
 
             if title_text
               server.send_msg(
