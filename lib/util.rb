@@ -56,13 +56,20 @@ module Rockbot
     when 0
       if hours >= 1
         response = hours == 1 ? "an hour" : "#{hours} hours"
-        response << " and #{minutes} minutes" if minutes > 0
+        response << " and #{minutes} minutes" if minutes > 1
       else
-        response = minutes >= 1 ? "#{minutes} minutes" : "less than a minute"
+        response = case minutes
+                   when 0
+                     "less than a minute"
+                   when 1
+                     "a minute"
+                   else
+                     "#{minutes} minutes"
+                   end
       end
     when 1..6
       response = days == 1 ? "a day" : "#{days} days"
-      response << " and #{hours} hours" if hours > 0
+      response << " and #{hours} hours" if hours > 1
     else
       weeks = days / 7
       wdays = days % 7
