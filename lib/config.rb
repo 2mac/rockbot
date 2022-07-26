@@ -45,10 +45,6 @@ module Rockbot
       'retries' => 10
     }
 
-    def self.get_relative(path)
-      Rockbot.resolve_relative path
-    end
-
     def initialize(path)
       config = {}
 
