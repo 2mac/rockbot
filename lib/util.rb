@@ -83,7 +83,6 @@ module Rockbot
   end
 
   def self.operator?(config, nick)
-    config['ops'].each { |op| return true if op.casecmp? nick }
-    false
+    config['ops'].map(&:downcase).include? nick.downcase
   end
 end
