@@ -94,7 +94,7 @@ create table seen (
             if result
               message = result[0]
               time = DateTime.strptime(result[1], '%Y-%m-%d %H:%M:%S')
-              diff = Rockbot.datetime_diff(time, DateTime.now.new_offset('+00:00'))
+              diff = Rockbot.datetime_diff(time, DateTime.now)
 
               response = "#{nick} was last seen #{diff} ago saying: #{message}"
             else
