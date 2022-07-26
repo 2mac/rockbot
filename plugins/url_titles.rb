@@ -76,13 +76,17 @@ module UrlTitles
           uri = URI(matches[0])
 
           response = get_uri uri
-          type = response['Content-Type']
-          Rockbot.log.debug { "type=#{type}" }
-          title_text = title response.body if type == 'text/html'
+          if response
+            type = response['Content-Type']
+            Rockbot.log.debug { "type=#{type}" }
+            title_text = title response.body if type == 'text/html'
 
-          if title_text
-            server.send_msg(event.channel,
-                            "(#{event.source.nick}) ^ #{title_text}")
+            if title_text
+              server.send_msg(
+                event.channel,
+                "(#{event.source.nick}) ^ #{title_text}"
+              )
+            end
           end
         end
       end
