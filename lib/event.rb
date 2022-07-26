@@ -148,6 +148,12 @@ module Rockbot
     end
 
     class MessageEvent < Event
+      def self.hook(event, server, config)
+        if event.command?(server, config)
+          CommandEvent.new(event, server, config).fire(server, config)
+        end
+      end
+
       attr_reader :source, :channel, :content, :action
       alias_method :action?, :action
 
@@ -178,14 +184,6 @@ module Rockbot
 
       def should_process?(server, config)
         !config['ignore'].include? source.nick
-      end
-
-      def fire(server, config)
-        if command?(server, config)
-          CommandEvent.new(self, server, config).fire(server, config)
-        else
-          super
-        end
       end
     end
 
