@@ -127,11 +127,17 @@ module Rockbot
 
       attr_reader :source, :channel, :command, :args
 
-      def initialize(message_event, config)
+      def initialize(message_event, server, config)
         @source = message_event.source
         @channel = message_event.channel
 
         content = message_event.content
+
+        mention_prefix_len = server.nick.length + 1
+        if /#{server.nick}.? / =~ content
+          content = content[mention_prefix_len..].lstrip
+        end
+
         content = content[1..] if content.chr == config['command_char']
         re = /(?<cmd>\S+)( (?<args>.*))?/
         matches = re.match content
@@ -142,14 +148,6 @@ module Rockbot
     end
 
     class MessageEvent < Event
-      def self.hook(event, server, config)
-        if !event.action? && !event.content.empty? &&
-           (event.channel[0] != '#' ||
-            event.content[0] == config['command_char'])
-          CommandEvent.new(event, config).fire(server, config)
-        end
-      end
-
       attr_reader :source, :channel, :content, :action
       alias_method :action?, :action
 
@@ -170,8 +168,24 @@ module Rockbot
         end
       end
 
+      def command?(server, config)
+        return false if action?
+        return false if @content.empty?
+        (@content.chr == config['command_char'] ||
+         @channel.chr != '#' ||
+         /#{server.nick}.? / =~ @content)
+      end
+
       def should_process?(server, config)
         !config['ignore'].include? source.nick
+      end
+
+      def fire(server, config)
+        if command?(server, config)
+          CommandEvent.new(self, server, config).fire(server, config)
+        else
+          super
+        end
       end
     end
 
