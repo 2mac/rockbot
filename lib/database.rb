@@ -40,9 +40,12 @@ module Rockbot
   end
 
   def self.database
-    @write_mutex.lock
-    yield @database
-    @write_mutex.unlock
+    begin
+      @write_mutex.lock
+      yield @database
+    ensure
+      @write_mutex.unlock
+    end
   end
 
   def self.close_db

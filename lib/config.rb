@@ -96,12 +96,16 @@ module Rockbot
     end
 
     def edit
-      @write_mutex.lock
+      begin
+        @write_mutex.lock
 
-      yield
-      File.open(@path, "w") { |f| f.puts JSON.pretty_generate(@data) }
+        result = yield
+        File.open(@path, "w") { |f| f.puts JSON.pretty_generate(@data) }
+      ensure
+        @write_mutex.unlock
+      end
 
-      @write_mutex.unlock
+      result
     end
 
     def [](key)
