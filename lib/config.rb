@@ -45,8 +45,8 @@ module Rockbot
       'retries' => 10
     }
 
-    def self.find_config
-      Rockbot.resolve_relative 'rockbot.json'
+    def self.get_relative(path)
+      Rockbot.resolve_relative path
     end
 
     def initialize(path)
