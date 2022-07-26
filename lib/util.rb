@@ -84,5 +84,6 @@ module Rockbot
 
   def self.operator?(config, nick)
     config['ops'].each { |op| return true if op.casecmp? nick }
+    false
   end
 end
