@@ -83,10 +83,12 @@ module Rockbot
     response
   end
 
+  ROOT_DIR = Pathname.new(__dir__).join('..').realpath
+
   # Gets the absolute path in relation to rockbot.rb
   def self.resolve_relative(path)
-    root = Pathname.new(__dir__).join('..').realpath
-    root.join(path)
+    path = Pathname.new path unless path.kind_of? Pathname
+    path.absolute? ? path : ROOT_DIR.join(path)
   end
 
   def self.operator?(config, nick)
