@@ -64,9 +64,6 @@ rescue => e
   exit 1
 end
 
-log.info 'Registering event types...'
-Rockbot.register_events
-
 log.info 'Setting default hooks...'
 Rockbot.set_default_hooks
 
