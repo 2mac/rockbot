@@ -241,8 +241,7 @@ module Rockbot
   end
 
   def self.set_default_hooks
-    events = ObjectSpace.each_object(Class).select { |c| c < Event }
-    events_with_hook = events.select { |c| c.methods.include? :hook }
+    events_with_hook = Event::EVENT_TYPES.select { |c| c.methods.include? :hook }
 
     events_with_hook.each do |event_class|
       event_class.add_hook &event_class.method(:hook)
