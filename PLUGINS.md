@@ -114,6 +114,12 @@ Rockbot.database do |db|
 end
 ```
 
+Logging
+-------
+
+rockbot uses the standard Ruby `logger` library for logging. Access the logger
+object with `Rockbot.log`.
+
 Appendix A: Event Types
 -----------------------
 
@@ -142,6 +148,7 @@ Attributes:
 - `channel`: the channel to which the message was sent
 - `action?`: whether this message was an action (i.e. `/me`)
 - `content`: the message text
+- `command?(server, config)`: tells whether this message is a command
 
 ### `NickEvent`
 
