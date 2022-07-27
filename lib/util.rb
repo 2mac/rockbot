@@ -30,6 +30,7 @@
 ##
 
 require 'date'
+require 'net/http'
 require 'pathname'
 
 module Rockbot
@@ -93,5 +94,35 @@ module Rockbot
 
   def self.operator?(config, nick)
     config['ops'].map(&:downcase).include? nick.downcase
+  end
+
+  def self.get_uri(uri, redirect_limit=10)
+    result = nil
+
+    if redirect_limit == 0
+      raise Net::ProtocolError, "Too many redirects"
+    end
+
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.open_timeout = 10
+    http.read_timeout = 10
+    http.use_ssl = uri.instance_of? URI::HTTPS
+
+    request = Net::HTTP::Get.new uri
+    response = http.request request
+
+    Rockbot.log.debug { "Response code #{response.code}" }
+    case response
+    when Net::HTTPSuccess
+      result = response
+    when Net::HTTPRedirection
+      redirect = response['location']
+      Rockbot.log.debug { "Redirected to #{redirect}" }
+      result = get_uri(URI(redirect), redirect_limit - 1)
+    else
+      raise Net::ProtocolError, "HTTP #{response.code}"
+    end
+
+    result
   end
 end

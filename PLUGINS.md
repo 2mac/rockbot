@@ -114,6 +114,12 @@ Rockbot.database do |db|
 end
 ```
 
+HTTP
+----
+
+If your plugin requires an HTTP GET request, pass a `URI` to `Rockbot.get_uri`,
+which will account for HTTP redirects and has a request timeout.
+
 Logging
 -------
 
