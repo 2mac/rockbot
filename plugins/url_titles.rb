@@ -33,19 +33,12 @@ require 'cgi'
 
 module UrlTitles
   URL_RE = /https?:\/\/\S+\.\S+/
-  TITLE_RE = /<title>(?<title>.*)<\/title>/m
-  TITLE_CLOSE_RE = /<\/title>/
+  TITLE_RE = /<title>(?<title>.*?)<\/title>/m
 
   class << self
     def title(html)
       matches = TITLE_RE.match html
-      result = matches ? matches[:title].gsub(/\R/,' ').strip : nil
-      if result
-        close = TITLE_CLOSE_RE =~ result
-        result = result[0...close] if close
-      end
-
-      result
+      matches ? matches[:title].gsub(/\R/,' ').strip : nil
     end
 
     def load
