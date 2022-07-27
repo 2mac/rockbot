@@ -69,23 +69,25 @@ module UrlTitles
 
     def load
       Rockbot::MessageEvent.add_hook do |event, server, config|
-        matches = URL_RE.match event.content
-        if matches
-          Rockbot.log.debug { "Captured URL #{matches[0]}" }
+        unless event.command?(server, config)
+          matches = URL_RE.match event.content
+          if matches
+            Rockbot.log.debug { "Captured URL #{matches[0]}" }
 
-          uri = URI(matches[0])
+            uri = URI(matches[0])
 
-          response = get_uri uri
-          if response
-            type = response['Content-Type']
-            Rockbot.log.debug { "type=#{type}" }
-            title_text = title response.body if type.include? 'text/html'
+            response = get_uri uri
+            if response
+              type = response['Content-Type']
+              Rockbot.log.debug { "type=#{type}" }
+              title_text = title response.body if type.include? 'text/html'
 
-            if title_text
-              server.send_msg(
-                event.channel,
-                "(#{event.source.nick}) ^ #{title_text}"
-              )
+              if title_text
+                server.send_msg(
+                  event.channel,
+                  "(#{event.source.nick}) ^ #{title_text}"
+                )
+              end
             end
           end
         end
