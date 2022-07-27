@@ -240,6 +240,12 @@ module Rockbot
     end
   end
 
+  class UnloadEvent < Event
+    def fire
+      super(nil, nil)
+    end
+  end
+
   def self.set_default_hooks
     events_with_hook = Event::EVENT_TYPES.select { |c| c.methods.include? :hook }
 

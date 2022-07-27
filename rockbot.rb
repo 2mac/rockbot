@@ -153,9 +153,13 @@ rescue => e
 end until done
 
 begin
-  Rockbot.close_db
-rescue
-  # shut up and be done
+  Rockbot::UnloadEvent.new.fire
+ensure
+  begin
+    Rockbot.close_db
+  rescue
+    # shut up and be done
+  end
 end
 
 exit exit_code

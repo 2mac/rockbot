@@ -165,6 +165,13 @@ Attributes:
 - `source`: the `IRC::User` who changed nicks (their previous identity)
 - `nick`: the new nick
 
+### `UnloadEvent`
+
+This is a special event which fires only when rockbot is about to exit. It does
+not provide any attributes or even a `server` or `config` to the hook. This is
+intended only for final cleanup logic such as committing anything to the
+database if necessary.
+
 Appendix B: The `server` Object
 -------------------------------
 
