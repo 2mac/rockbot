@@ -29,6 +29,8 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
+require 'cgi'
+
 module UrlTitles
   URL_RE = /https?:\/\/\S+\.\S+/
   TITLE_RE = /<title>(?<title>.*)<\/title>/m
@@ -60,6 +62,7 @@ module UrlTitles
               title_text = title response.body if type.include? 'text/html'
 
               if title_text
+                title_text = CGI.unescapeHTML title_text
                 server.send_msg(
                   event.channel,
                   "(#{event.source.nick}) ^ #{title_text}"
