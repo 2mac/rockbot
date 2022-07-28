@@ -36,6 +36,7 @@ module Rockbot
   class Event
     EVENT_TYPES = []
     HOOKS = {}
+    THREADS = []
 
     class << self
       def add_hook(&block)
@@ -64,13 +65,19 @@ module Rockbot
       end
 
       def process(line, server, config)
-        Thread.new {
-          msg = IRC::Message.new line
-          EVENT_TYPES.each do |event_type|
-            if event_type.responds_to? msg.command
-              event = event_type.new msg
-              event.fire(server, config)
+        THREADS << Thread.new {
+          begin
+            msg = IRC::Message.new line
+            EVENT_TYPES.each do |event_type|
+              if event_type.responds_to? msg.command
+                event = event_type.new msg
+                event.fire(server, config)
+              end
             end
+          rescue => e
+            Rockbot.log.error e
+          ensure
+            THREADS.delete Thread.current
           end
         }
       end

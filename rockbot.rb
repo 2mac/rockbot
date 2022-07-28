@@ -163,6 +163,19 @@ rescue => e
 end until done
 
 begin
+  Rockbot.log.info "Waiting for event threads..."
+  threads = Rockbot::Event::THREADS
+  until threads.empty?
+    thread = threads.shift
+    if thread.alive?
+      Rockbot.log.debug { "Awaiting #{thread}" }
+      thread.join
+    else
+      Rockbot.log.debug { "Skipping dead thread #{thread}" }
+    end
+  end
+
+  Rockbot.log.info "Unloading plugins..."
   Rockbot::UnloadEvent.new.fire
 ensure
   begin
