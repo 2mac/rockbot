@@ -40,6 +40,11 @@ module Rockbot
       timestamp = '%d-%02d-%02d %02d:%02d:%02d' %
                   [time.year, time.month, time.mday, time.hour, time.min,
                    time.sec]
+      if msg.kind_of? Exception
+        msg_str = "#{msg.class}: #{msg.message}"
+        msg_str << "\n#{msg.backtrace.join('\n')}" if msg.backtrace
+        msg = msg_str
+      end
       "#{timestamp} #{severity} #{msg}\n"
     }
   end
