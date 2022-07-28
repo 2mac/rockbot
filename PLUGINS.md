@@ -192,5 +192,6 @@ Methods:
 - `send_msg(target, content)`: send a chat message to `target` (a channel or
   user)
 - `send_notice(target, content)`: send an IRC NOTICE to `target`
+- `send_action(target, content)`: send an ACTION (`/me`) message to `target`
 - `set_nick(nick)`: ask the server to change rockbot's nick. If successful,
   this will generate a `NickEvent`.

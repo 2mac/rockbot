@@ -161,6 +161,10 @@ module Rockbot
         send_cmd("NOTICE #{target} :", content)
       end
 
+      def send_emote(target, content)
+        send_msg(target, "\x01ACTION #{content}\x01")
+      end
+
       def set_nick(nick)
         self.puts "NICK #{nick}"
       end
