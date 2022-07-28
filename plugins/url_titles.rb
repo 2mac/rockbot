@@ -72,12 +72,13 @@ module UrlTitles
             if response
               type = response['Content-Type']
               Rockbot.log.debug { "type=#{type}" }
-              title_text = title response.body if type.include? 'text/html'
+              text = title response.body if type.include? 'text/html'
 
-              if title_text
+              if text
+                text = Rockbot::IRC.format "<b>#{text}</b>"
                 server.send_msg(
                   event.channel,
-                  "(#{event.source.nick}) ^ #{title_text}"
+                  "(#{event.source.nick}) ^ #{text}"
                 )
               end
             end
