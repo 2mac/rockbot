@@ -36,7 +36,6 @@ module Rockbot
   class Event
     EVENT_TYPES = []
     HOOKS = {}
-    @event_map = {}
 
     class << self
       def add_hook(&block)
