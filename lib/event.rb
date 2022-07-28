@@ -84,9 +84,13 @@ module Rockbot
     def fire(server, config)
       if should_process?(server, config)
         hooks = HOOKS[self.class]
-        if hooks
-          hooks.each { |block| block.call(self, server, config) }
-        end
+        hooks.each do |block|
+          begin
+            block.call(self, server, config)
+          rescue => e
+            Rockbot.log.error e
+          end
+        end if hooks
       end
     end
 
