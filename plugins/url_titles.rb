@@ -1,3 +1,4 @@
+# coding: utf-8
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
 ##  Copyright (C) 2022 David McMackins II
@@ -34,11 +35,23 @@ require 'cgi'
 module UrlTitles
   URL_RE = /https?:\/\/\S+\.\S+/
   TITLE_RE = /<title>(?<title>.*?)<\/title>/m
+  MAX_LENGTH = 100
 
   class << self
     def title(html)
       matches = TITLE_RE.match html
-      matches ? matches[:title].gsub(/\R/,' ').strip : nil
+      text = matches ? matches[:title].gsub(/\R/,' ').strip : nil
+      if text
+        text = CGI.unescapeHTML text
+        if text.length > MAX_LENGTH
+          text = text[0, MAX_LENGTH]
+          index = text.rindex ' '
+          text = text[0, index] if index
+          text << '…'
+        end
+      end
+
+      text
     end
 
     def load
@@ -62,7 +75,6 @@ module UrlTitles
               title_text = title response.body if type.include? 'text/html'
 
               if title_text
-                title_text = CGI.unescapeHTML title_text
                 server.send_msg(
                   event.channel,
                   "(#{event.source.nick}) ^ #{title_text}"
