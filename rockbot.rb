@@ -39,6 +39,14 @@ require_relative 'lib/irc'
 require_relative 'lib/plugin'
 require_relative 'lib/transport'
 
+ART = <<'EOF'
+                    __   __          __ 
+   _________  _____/ /__/ /_  ____  / /_
+  / ___/ __ \/ ___/ //_/ __ \/ __ \/ __/
+ / /  / /_/ / /__/ ,< / /_/ / /_/ / /_  
+/_/   \____/\___/_/|_/_.___/\____/\__/  
+EOF
+
 APP_NAME = 'rockbot'
 APP_VERSION = '0.0.0'
 APP_REPO = 'https://github.com/2mac/rockbot'
@@ -48,7 +56,9 @@ config = Rockbot::Config.new Rockbot.resolve_relative(config_path)
 
 Rockbot.init_logger(config['log_file'], config['log_level'])
 log = Rockbot.log
-log.info "#{APP_NAME} #{APP_VERSION}"
+
+ART.lines.each { |line| log.info line.chomp }
+log.info "            Version #{APP_VERSION}"
 
 unless config.validate
   log.fatal "Errors in configuration file. See above for info."
