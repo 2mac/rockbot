@@ -197,5 +197,51 @@ module Rockbot
       end
     end
 
+    COLOR_MAP = {
+      'white' => '00',
+      'black' => '01',
+      'blue' => '02',
+      'green' => '03',
+      'red' => '04',
+      'brown' => '05',
+      'purple' => '06',
+      'orange' => '07',
+      'yellow' => '08',
+      'lgreen' => '09',
+      'cyan' => '10',
+      'lcyan' => '11',
+      'lblue' => '12',
+      'pink' => '13',
+      'gray' => '14',
+      'grey' => '14',
+      'lgray' => '15',
+      'lgrey' => '15'
+    }
+
+    def self.format(text)
+      text = text.gsub(/<\/?b>/, "\x02")
+      text.gsub!(/<\/?i>/, "\x1D")
+      text.gsub!(/<\/?u>/, "\x1F")
+      text.gsub!(/<\/?s>/, "\x1E")
+      text.gsub!(/<\/?c>/, "\x03")
+
+      color_re = /<c:(?<fg>\w+)(,(?<bg>\w+))?>/
+      while m = color_re.match(text)
+        fg = m[:fg]
+        bg = m[:bg]
+
+        fg = COLOR_MAP[fg] if COLOR_MAP.include? fg
+        bg = COLOR_MAP[bg] if COLOR_MAP.include? bg
+
+        code = "\x03#{fg}"
+        code << ",#{bg}" if bg
+
+        index = m.offset 0
+        text = text[0...index[0]] + code + text[index[1]..]
+      end
+
+      text
+    end
+
   end
 end

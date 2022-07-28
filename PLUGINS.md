@@ -120,6 +120,45 @@ HTTP
 If your plugin requires an HTTP GET request, pass a `URI` to `Rockbot.get_uri`,
 which will account for HTTP redirects and has a request timeout.
 
+Text Formatting
+---------------
+
+rockbot has a built in text formatter for your chat messages.
+
+``` ruby
+Rockbot::IRC.format "<b>This text is bold!</b>"
+Rockbot::IRC.format "<c:red,white>This text is red with a white background!</c>"
+```
+
+Here are all the formats you can use:
+
+- `b`: bold
+- `i`: italic
+- `u`: underline
+- `s`: strike-through
+- `c:fg,bg`: color, with foreground and background. If you wish not to set a
+  background color, simply use `c:fg`.
+
+You may use color names as shown above, or you may use the numeric codes for
+colors. These are all the color names recognized by rockbot:
+
+- `white`
+- `black`
+- `blue`
+- `green`
+- `red`
+- `brown`
+- `purple`
+- `orange`
+- `yellow`
+- `lgreen` (light green)
+- `cyan` (more of a blue-green)
+- `lcyan` (more of a cyan)
+- `lblue` (light blue)
+- `pink`
+- `gray`/`grey`
+- `lgray`/`lgrey` (light gray)
+
 Logging
 -------
 
