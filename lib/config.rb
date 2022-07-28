@@ -40,7 +40,7 @@ module Rockbot
       'log_level' => 'INFO',
       'ops' => [],
       'plugins' => [],
-      'plugin_path' => ['plugins/'],
+      'plugin_path' => [],
       'quit_msg' => '',
       'retries' => 10
     }

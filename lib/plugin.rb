@@ -47,7 +47,9 @@ module Rockbot
       plugin_name += '.rb'
     end
 
-    config['plugin_path'].each do |path|
+    paths = config['plugin_path'] + ['plugins/']
+
+    paths.each do |path|
       dir = Pathname.new(path)
       unless dir.absolute?
         dir = Rockbot.resolve_relative dir
