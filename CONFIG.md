@@ -17,6 +17,10 @@ finds first:
 
 - `./rockbot.json`
 
+Alternatively, you may provide a config file as a command line argument.
+
+    $ rockbot.rb config.json
+
 The available options are as follows:
 
 - `auth` - Authentication info. See below for details.
