@@ -59,10 +59,14 @@ module Rockbot
       if plugin_file.file?
         @logger.debug { "Found #{plugin_name} at #{plugin_file.to_s}" }
 
-        @logger.info "Loading #{plugin_name}..."
-        Kernel.require plugin_file
+        begin
+          Kernel.require plugin_file
+        rescue => e
+          Rockbot.log.error "Error loading #{plugin_name}"
+          Rockbot.log.error e
+        end
 
-        loaded = true
+        loaded = true # always set this to suppress the "failed to find" message
         break
       end
     end
