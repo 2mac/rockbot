@@ -10,6 +10,12 @@ admin
 This plugin contains administrative functions such as joining channels,
 changing nick, and managing the ignore list.
 
+magic8
+------
+
+This plugin adds the `8ball` command which responds with typical magic 8 ball
+yes/no answers.
+
 seen
 ----
 
