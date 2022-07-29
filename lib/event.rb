@@ -154,7 +154,7 @@ module Rockbot
       content = message_event.content
 
       mention_prefix_len = server.nick.length + 1
-      if /^#{server.nick}.? / =~ content
+      if /^#{server.nick}.?\s/ =~ content
         content = content[mention_prefix_len..].lstrip
       end
 
@@ -203,7 +203,7 @@ module Rockbot
       return false if @content.empty?
       (/^#{config['command_char']}\w+/ =~ @content ||
        @channel.chr != '#' ||
-       /^#{server.nick}.? \w+/ =~ @content)
+       /^#{server.nick}.?\s+\w+/ =~ @content)
     end
 
     def should_process?(server, config)
