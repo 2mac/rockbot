@@ -57,13 +57,9 @@ module Magic8Plugin
   class << self
 
     def load
-      rand = Random.new
-
       cmd = Rockbot::Command.new('8ball') do |event, server, config|
         target = event.channel.start_with?('#') ? event.channel : event.source.nick
-        response = RESPONSES[rand.rand(RESPONSES.size)]
-        response = Rockbot::IRC.format "<b>#{response}</b>"
-
+        response = Rockbot::IRC.format "<b>#{RESPONSES.sample}</b>"
         server.send_emote(target, "shakes the magic 8 ball... #{response}")
       end
       cmd.help_text = "Queries the mysterious magic 8 ball\n" +
