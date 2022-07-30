@@ -16,6 +16,12 @@ magic8
 This plugin adds the `8ball` command which responds with typical magic 8 ball
 yes/no answers.
 
+roll
+----
+
+This plugin adds the `roll` command for rolling dice and `coin` command for
+flipping coins.
+
 seen
 ----
 
