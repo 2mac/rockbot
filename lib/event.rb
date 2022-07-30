@@ -139,6 +139,33 @@ module Rockbot
     end
   end
 
+  class JoinFailedEvent < Event
+    CODES = {
+      '403' => 'No such channel',
+      '405' => 'Joined too many channels',
+      '471' => 'Channel is full',
+      '473' => 'Not invited',
+      '474' => 'Banned',
+      '475' => 'Bad password'
+    }
+
+    def self.responds_to?(command)
+      CODES.include? command
+    end
+
+    def self.hook(event, server, config)
+      Rockbot.log.error "Failed to join #{event.channel}: #{event.reason}"
+    end
+
+    attr_reader :channel, :reason
+
+    def initialize(message)
+      params = message.parameters.split
+      @channel = params[1]
+      @reason = CODES[message.command]
+    end
+  end
+
   class KickEvent < Event
     def self.responds_to?(command)
       command == 'KICK'
