@@ -139,6 +139,28 @@ module Rockbot
     end
   end
 
+  class KickEvent < Event
+    def self.responds_to?(command)
+      command == 'KICK'
+    end
+
+    def self.hook(event, server, config)
+      if event.target.casecmp? server.nick
+        Rockbot.log.warn "Kicked from #{event.channel} by #{event.source.nick}"
+      end
+    end
+
+    attr_reader :source, :channel, :target
+
+    def initialize(message)
+      @source = IRC::User.new message.source
+
+      params = message.parameters.split
+      @channel = params[0]
+      @target = params[1]
+    end
+  end
+
   class CommandEvent < Event
     def self.hook(event, server, config)
       command = Rockbot::Command.from_name event.command
