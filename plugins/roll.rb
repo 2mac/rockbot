@@ -30,7 +30,7 @@
 ##
 
 module RollPlugin
-  ROLL_RE = /(?<n>\d+)?d(?<sides>\d+)/
+  ROLL_RE = /^(?<n>\d+)?d(?<sides>\d+)$/
   COIN_FACES = %w{ heads tails }
   MAX_ROLLS = 30
 
