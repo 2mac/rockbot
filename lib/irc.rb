@@ -116,6 +116,8 @@ module Rockbot
             line = self.gets
             Rockbot.log.debug { "recv: #{line}" }
           end
+        rescue
+          # ignore
         ensure
           @transport.disconnect
         end
