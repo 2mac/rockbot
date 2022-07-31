@@ -16,6 +16,12 @@ magic8
 This plugin adds the `8ball` command which responds with typical magic 8 ball
 yes/no answers.
 
+poll
+----
+
+This plugin adds a polling system. Users can create and vote on polls with
+arbitrary vote choices.
+
 roll
 ----
 
