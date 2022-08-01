@@ -84,11 +84,10 @@ help_cmd = Rockbot::Command.new('help', ['h']) do |event, server, config|
                "Supported commands: #{names.sort.join(', ')}"
   else
     command = Rockbot::Command.from_name name
-    response = "#{command.name} - "
     if command.nil? || command.help_text.nil?
-      response << "no help text found"
+      response = "no help text found for #{name}"
     else
-      response << "#{command.help_text}"
+      response = "#{command.name} - #{command.help_text}"
 
       unless command.aliases.empty?
         response << "\nAliases: #{command.aliases.sort.join(', ')}"
