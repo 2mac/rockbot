@@ -14,6 +14,9 @@ How?
 Write up a config file and run `rockbot.rb`. See [CONFIG.md](CONFIG.md) for
 details of the configuration.
 
+If you want to use plugins which require a database, you'll need to install the
+`sequel` and `sqlite3` gems.
+
 License
 -------
 
