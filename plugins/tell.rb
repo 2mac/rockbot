@@ -32,33 +32,26 @@
 module TellPlugin
   class << self
     def setup_db
-      Rockbot.database do |db|
-        db.execute "create table if not exists tell_meta ( version int );"
+      db = Rockbot.database
+      db.create_table?(:tell_meta) { Integer :version }
 
-        schema_version = 0
-        results = db.query "select version from tell_meta"
-        results.each { |row| schema_version = row[0] }
-        results.close
+      meta = db[:tell_meta].first
+      schema_version = meta ? meta[:version] : 0
 
-        setup_sql = [
-          # version 1
-          "insert into tell_meta values (1);
-create table tell (
-  source text not null,
-  channel text not null,
-  target text not null,
-  message text,
-  time text,
-  primary key (source,channel,target,message) on conflict ignore
-);
-create table tell_notify (
-  target text not null,
-  primary key (target) on conflict ignore
-);"
-        ]
-
-        setup_sql[schema_version..].each do |sql|
-          sql.split(';').each { |stmt| db.execute stmt }
+      case schema_version
+      when 0
+        db[:tell_meta].insert [1]
+        db.create_table(:tell) do
+          String :source, null: false, size: 32
+          String :channel, null: false, size: 64
+          String :target, null: false, size: 32
+          String :message, text: true
+          DateTime :time, null: false
+          primary_key [:source, :channel, :target, :message]
+        end
+        db.create_table(:tell_notify) do
+          String :target, size: 32, null: false
+          primary_key [:target]
         end
       end
     end
@@ -67,13 +60,13 @@ create table tell_notify (
       if event.channel.start_with? '#'
         args = event.args.split
         if args.size >= 2
-          if args[0] == event.source.nick
+          if args[0].casecmp? event.source.nick
             server.send_msg(
               event.channel,
               "#{event.source.nick}: Might I recommend a notepad?"
             )
             return
-          elsif args[0] == server.nick
+          elsif args[0].casecmp? server.nick
             server.send_msg(
               event.channel,
               "#{event.source.nick}: Why don't you say that to my face?"
@@ -81,22 +74,35 @@ create table tell_notify (
             return
           end
 
+          source = event.source.nick
+          channel = event.channel.downcase
           target = args[0].downcase
+
           re = /\S+\s+(?<message>.*)/
           matches = re.match event.args
           message = matches[:message].strip
 
-          Rockbot.database do |db|
-            db.execute(
-              "insert into tell (source,channel,target,message,time) " +
-              "values (?,?,?,?,datetime('now'))",
-              event.source.nick, event.channel.downcase, target, message
-            )
+          db = Rockbot.database
+          existing = db[:tell].where(
+            channel: channel,
+            target: target,
+            message: message
+          ) { lower(source()) =~ source.downcase }
 
-            db.execute(
-              "delete from tell_notify where target = ?",
-              target
-            )
+          Rockbot.log.debug { existing.sql }
+
+          unless existing.first
+            db.transaction do
+              db[:tell].insert(
+                source: source,
+                channel: channel,
+                target: target,
+                message: message,
+                time: DateTime.now
+              )
+
+              db[:tell_notify].where(target: target).delete
+            end
           end
 
           server.send_notice(
@@ -110,45 +116,33 @@ create table tell_notify (
     end
 
     def clear_tells(db, target, channel=nil)
-      sql = "delete from tell where target = ?"
-      params = [target]
+      tells = db[:tell].where(target: target)
+      tells = tells.where(channel: channel) if channel
 
-      if channel
-        sql << " and channel = ?"
-        params << channel
-      end
-
-      db.execute(sql, params)
+      tells.delete
     end
 
     def showtells(event, server, config)
-      Rockbot.database do |db|
-        results = db.query(
-          "select source, message, time from tell where target = ?",
-          event.source.nick.downcase
-        )
+      target = event.source.nick.downcase
+      db = Rockbot.database
+      tells = db[:tell].where(target: target).all
 
-        count = 0
-        while (result = results.next)
-          source = result[0]
-          message = result[1]
-          time = DateTime.strptime(result[2], '%Y-%m-%d %H:%M:%S')
+      if tells.empty?
+        server.send_msg(event.source.nick, "You have no pending messages.")
+      else
+        tells.each do |tell|
+          source = tell[:source]
+          message = tell[:message]
+          time = tell[:time].to_datetime
           diff = Rockbot.datetime_diff(time, DateTime.now)
 
           server.send_msg(
             event.source.nick,
             "#{diff} ago, #{source} told you: #{message}"
           )
-
-          count += 1
         end
-        results.close
 
-        if count == 0
-          server.send_msg(event.source.nick, "You have no pending messages.")
-        else
-          clear_tells(db, event.source.nick.downcase)
-        end
+        clear_tells(db, target)
       end
     end
 
@@ -157,54 +151,32 @@ create table tell_notify (
         channel = event.channel.downcase
         target = event.source.nick.downcase
 
-        Rockbot.database do |db|
-          results = db.query(
-            "select target from tell_notify where target = ?",
-            target
+        db = Rockbot.database
+        notified = db[:tell_notify].where(target: target).first
+        return if notified
+
+        pending = db[:tell].where(target: target, channel: channel).first(2)
+        if pending.size == 1
+          pending = pending[0]
+          source = pending[:source]
+          message = pending[:message]
+          time = pending[:time].to_datetime
+          diff = Rockbot.datetime_diff(time, DateTime.now)
+
+          server.send_msg(
+            event.channel,
+            "#{event.source.nick}: #{diff} ago, #{source} told you: #{message}"
           )
 
-          if results.next
-            results.close
-            return
-          end
-
-          results = db.query(
-            "select count(*) from tell where channel = ? and target = ?",
-            channel, target
+          clear_tells(db, target, channel)
+        elsif pending.size > 1
+          server.send_msg(
+            event.channel,
+            "#{event.source.nick}: You have #{num_pending} pending messages. " +
+            "Type #{config['command_char']}showtells to read them."
           )
 
-          result = results.next
-          num_pending = result[0].to_i
-          results.close
-
-          if num_pending == 1
-            results = db.query(
-              "select source, message, time from tell where channel = ? and target = ?",
-              channel, target
-            )
-
-            result = results.next
-            source = result[0]
-            message = result[1]
-            time = DateTime.strptime(result[2], '%Y-%m-%d %H:%M:%S')
-            diff = Rockbot.datetime_diff(time, DateTime.now)
-            results.close
-
-            server.send_msg(
-              event.channel,
-              "#{event.source.nick}: #{diff} ago, #{source} told you: #{message}"
-            )
-
-            clear_tells(db, target, channel)
-          elsif num_pending > 1
-            server.send_msg(
-              event.channel,
-              "#{event.source.nick}: You have #{num_pending} pending messages. " +
-              "Type #{config['command_char']}showtells to read them."
-            )
-
-            db.execute("insert into tell_notify values (?)", target)
-          end
+          db[:tell_notify].insert [target]
         end
       end
     end

@@ -35,60 +35,54 @@ module PollPlugin
 
     def self.from_db(nick, channel)
       poll = Poll.new
+      Rockbot.log.debug { "#{nick} #{channel}" }
 
-      Rockbot.database do |db|
-        db.query(
-          "select id, text, options from poll where nick = ? and channel = ?",
-          nick, channel
-        ) do |results|
-          row = results.next
-          if row
-            poll.id = row[0]
-            poll.text = row[1]
-            poll.options = row[2].split ','
-          end
-        end
+      db = Rockbot.database
+      selection = db[:poll].where {
+        (lower(nick()) =~ nick.downcase) &
+          (lower(channel()) =~ channel.downcase)
+      }
 
-        raise ArgumentError unless poll.id
+      Rockbot.log.debug { selection.sql }
 
-        poll.nick = nick
-        poll.channel = channel
-        poll
+      selection.all do |row|
+        poll.id = row[:id]
+        poll.nick = row[:nick]
+        poll.channel = row[:channel]
+        poll.text = row[:text]
+        poll.options = row[:options].split ','
       end
+
+      raise ArgumentError unless poll.id
+
+      poll
     end
   end
 
   class << self
     def setup_db
-      Rockbot.database do |db|
-        db.execute "create table if not exists poll_meta ( version int );"
+      db = Rockbot.database
+      db.create_table?(:poll_meta) { Integer :version }
 
-        schema_version = 0
-        results = db.query "select version from poll_meta"
-        results.each { |row| schema_version = row[0] }
-        results.close
+      meta = db[:poll_meta].first
+      schema_version = meta ? meta[:version] : 0
 
-        setup_sql = [
-          # version 1
-          "insert into poll_meta values (1);
-create table poll (
-  id integer primary key autoincrement,
-  nick text,
-  channel text,
-  text text,
-  options text,
-  unique (nick,channel)
-);
-create table poll_vote (
-  poll_id int,
-  nick text,
-  choice text,
-  primary key (poll_id,nick) on conflict replace
-)"
-        ]
-
-        setup_sql[schema_version..].each do |sql|
-          sql.split(';').each { |stmt| db.execute stmt }
+      case schema_version
+      when 0
+        db[:poll_meta].insert [1]
+        db.create_table(:poll) do
+          primary_key :id
+          String :nick, size: 32, null: false
+          String :channel, size: 64, null: false
+          String :text, text: true, null: false
+          String :options, text: true, null: false
+          unique [:nick, :channel]
+        end
+        db.create_table(:poll_vote) do
+          foreign_key :poll_id, :poll
+          String :nick, size: 32, null: false
+          String :choice, text: true, null: false
+          primary_key [:poll_id, :nick]
         end
       end
     end
@@ -112,19 +106,13 @@ create table poll_vote (
         return
       end
 
-      count = nil
-      Rockbot.database do |db|
-        results = db.query(
-          "select count(*) from poll where channel = ? and nick = ?",
-          channel, nick
-        )
+      db = Rockbot.database
+      selection = db[:poll].where {
+        (lower(nick()) =~ nick.downcase) &
+          (lower(channel()) =~ channel.downcase)
+      }
 
-        result = results.next
-        count = result[0]
-        results.close
-      end
-
-      if count != 0
+      if selection.count != 0
         server.send_msg(channel, "#{nick}: You already have a poll open in this channel!")
         return
       end
@@ -133,7 +121,7 @@ create table poll_vote (
       when 1
         poll_options = %w{ yes no }
       when 2
-        poll_options = poll_details[1].split(',').map(&:strip).map(&:downcase)
+        poll_options = poll_details[1].split(',').map(&:strip).map(&:downcase).uniq
       else
         server.send_msg(
           channel,
@@ -150,12 +138,12 @@ create table poll_vote (
         return
       end
 
-      Rockbot.database do |db|
-        db.execute(
-          "insert into poll (nick,channel,text,options) values (?,?,?,?)",
-          nick, channel, poll_text, poll_options.join(',')
-        )
-      end
+      db[:poll].insert(
+        nick: nick,
+        channel: channel,
+        text: poll_text,
+        options: poll_options.join(',')
+      )
 
       server.send_msg(
         channel,
@@ -195,11 +183,11 @@ create table poll_vote (
         return
       end
 
-      Rockbot.database do |db|
-        db.execute(
-          "insert into poll_vote (poll_id,nick,choice) values (?,?,?)",
-          poll.id, nick, choice
-        )
+      db = Rockbot.database
+      db.transaction do
+        vote_nick = nick.downcase
+        db[:poll_vote].where(poll_id: poll.id, nick: vote_nick).delete
+        db[:poll_vote].insert(poll_id: poll.id, nick: vote_nick, choice: choice)
       end
 
       server.send_notice(nick, "You have cast your vote in #{poll_nick}'s poll!")
@@ -219,15 +207,11 @@ create table poll_vote (
       counts = {}
       poll.options.each { |option| counts[option] = 0 }
 
-      Rockbot.database do |db|
-        db.query(
-          "select choice from poll_vote where poll_id = ?",
-          poll.id
-        ) do |results|
-          while row = results.next
-            counts[row[0]] += 1
-          end
-        end
+      db = Rockbot.database
+
+      votes = db[:poll_vote].where(poll_id: poll.id)
+      votes.all do |row|
+        counts[row[:choice]] += 1
       end
 
       results = counts.sort { |a,b| b[1] <=> a[1] }
@@ -239,10 +223,8 @@ create table poll_vote (
         "#{nick}'s poll is closed! #{poll.text} - Results: #{results}"
       )
 
-      Rockbot.database do |db|
-        db.execute("delete from poll_vote where poll_id = ?", poll.id)
-        db.execute("delete from poll where id = ?", poll.id)
-      end
+      votes.delete
+      db[:poll].where(id: poll.id).delete
     end
 
     def load

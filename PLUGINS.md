@@ -105,14 +105,17 @@ written to the disk before any other event hook is allowed to touch it.
 Database
 --------
 
-rockbot provides a SQLite database for plugins to use, which is usually more
-handy than the config file. It is accessed similarly to editing the config:
+rockbot uses the `sequel` library for database access. You can get a handle on
+the database by calling `Rockbot.database`.
 
 ``` ruby
-Rockbot.database do |db|
-  # access the database with db here
+db = Rockbot.database
+db[:my_table].where(id: my_id).all do |row|
+  # ...
 end
 ```
+
+For more information, see the [Sequel documentation][1].
 
 HTTP
 ----
@@ -234,3 +237,5 @@ Methods:
 - `send_emote(target, content)`: send an emote (`/me`) message to `target`
 - `set_nick(nick)`: ask the server to change rockbot's nick. If successful,
   this will generate a `NickEvent`.
+
+[1]: https://sequel.jeremyevans.net/documentation.html

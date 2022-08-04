@@ -32,28 +32,21 @@
 module SeenPlugin
   class << self
     def setup_db
-      Rockbot.database do |db|
-        db.execute "create table if not exists seen_meta ( version int );"
+      db = Rockbot.database
+      db.create_table?(:seen_meta) { Integer :version }
 
-        schema_version = 0
-        results = db.query "select version from seen_meta"
-        results.each { |row| schema_version = row[0] }
-        results.close
+      meta = db[:seen_meta].first
+      schema_version = meta ? meta[:version] : 0
 
-        setup_sql = [
-          # version 1
-          "insert into seen_meta values (1);
-create table seen (
-  nick text not null,
-  channel text not null,
-  message text,
-  time text,
-  primary key (nick,channel) on conflict replace
-);"
-        ]
-
-        setup_sql[schema_version..].each do |sql|
-          sql.split(';').each { |stmt| db.execute stmt }
+      case schema_version
+      when 0
+        db[:seen_meta].insert [1]
+        db.create_table(:seen) do
+          String :nick, null: false, size: 32
+          String :channel, null: false, size: 64
+          String :message, text: true
+          DateTime :time, null: false
+          primary_key [:nick, :channel]
         end
       end
     end
@@ -63,11 +56,13 @@ create table seen (
         content = event.content
         content = "* #{event.source.nick} #{content}" if event.action?
 
-        Rockbot.database do |db|
-          db.execute(
-            "insert into seen values (?,?,?,datetime('now'))",
-            event.source.nick.downcase, event.channel.downcase, content
-          )
+        nick = event.source.nick.downcase
+        channel = event.channel.downcase
+
+        db = Rockbot.database
+        db.transaction do
+          db[:seen].where(nick: nick, channel: channel).delete
+          db[:seen].insert [nick, channel, content, DateTime.now]
         end
       end
     end
@@ -84,23 +79,17 @@ create table seen (
           server.send_msg(channel, "#{event.source.nick}: That's me!")
         else
           response = ''
-          Rockbot.database do |db|
-            results = db.query(
-              "select message, time from seen where nick = ? and channel = ?",
-              nick.downcase, channel.downcase
-            )
+          db = Rockbot.database
+          seen = db[:seen].where(nick: nick.downcase, channel: channel.downcase).first
 
-            result = results.next
-            if result
-              message = result[0]
-              time = DateTime.strptime(result[1], '%Y-%m-%d %H:%M:%S')
-              diff = Rockbot.datetime_diff(time, DateTime.now)
+          if seen
+            message = seen[:message]
+            time = message[:time].to_datetime
+            diff = Rockbot.datetime_diff(time, DateTime.now)
 
-              response = "#{nick} was last seen #{diff} ago saying: #{message}"
-            else
-              response = "I haven't seen #{nick} talking in this channel."
-            end
-            results.close
+            response = "#{nick} was last seen #{diff} ago saying: #{message}"
+          else
+            response = "I haven't seen #{nick} talking in this channel."
           end
 
           server.send_msg(channel, response)

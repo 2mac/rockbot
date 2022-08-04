@@ -29,27 +29,28 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require 'sqlite3'
+require 'sequel'
 
 require_relative 'util'
 
 module Rockbot
   def self.init_db(config)
-    @database = SQLite3::Database.new resolve_relative(config['database']).to_s
-    @write_mutex = Thread::Mutex.new
+    config = config['database']
+    if config.instance_of? String
+      config = { 'type' => 'sqlite', 'database' => config }
+    end
+
+    @database = Sequel.connect(
+      adapter: config['type'],
+      database: config['database']
+    )
   end
 
   def self.database
-    begin
-      @write_mutex.lock
-      yield @database
-    ensure
-      @write_mutex.unlock
-    end
+    @database
   end
 
   def self.close_db
-    @database.interrupt
-    @database.close
+    @database.disconnect
   end
 end
