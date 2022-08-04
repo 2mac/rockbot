@@ -40,7 +40,7 @@ module UrlTitles
   class << self
     def title(html)
       matches = TITLE_RE.match html
-      text = matches ? matches[:title].gsub(/\R/,' ').strip : nil
+      text = matches ? matches[:title].gsub(/(\R|&nbsp;)/,' ').strip : nil
       if text
         text = CGI.unescapeHTML text
         if text.length > MAX_LENGTH
