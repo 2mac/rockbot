@@ -33,7 +33,6 @@
 require_relative 'lib/log'
 require_relative 'lib/command'
 require_relative 'lib/config'
-require_relative 'lib/database'
 require_relative 'lib/event'
 require_relative 'lib/irc'
 require_relative 'lib/plugin'
@@ -65,13 +64,19 @@ unless config.validate
   exit 1
 end
 
-begin
-  log.info "Loading database..."
-  Rockbot.init_db config
-rescue => e
-  log.fatal "Error loading database"
-  log.fatal e
-  exit 1
+have_database = config['database'] != nil
+if have_database
+  begin
+    require_relative 'lib/database'
+    log.info "Loading database..."
+    Rockbot.init_db config
+  rescue => e
+    log.fatal "Error loading database"
+    log.fatal e
+    exit 1
+  end
+else
+  log.warn "Starting without database"
 end
 
 log.info 'Setting default hooks...'
@@ -177,11 +182,7 @@ begin
   Rockbot.log.info "Unloading plugins..."
   Rockbot::UnloadEvent.new.fire
 ensure
-  begin
-    Rockbot.close_db
-  rescue
-    # shut up and be done
-  end
+  Rockbot.close_db if have_database
 end
 
 exit exit_code

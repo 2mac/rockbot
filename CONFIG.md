@@ -27,6 +27,7 @@ The available options are as follows:
 - `channels` - A list of channels to join.
 - `command_char` - The character by which rockbot will recognize a command
   originating from IRC. (default: `,`)
+- `database` - Path to the database file.
 - `ignore` - A list of nicks for whom to ignore incoming messages.
 - `log_level` - Sets the verbosity of program logging. One of DEBUG, INFO,
   WARN, ERROR. (default: INFO)

@@ -3,8 +3,6 @@ rockbot
 
 Yet another extensible IRC bot written in Ruby.
 
-Depends on the `sequel` and `sqlite3` Ruby gems.
-
 Why?
 ----
 
