@@ -84,7 +84,7 @@ module SeenPlugin
 
           if seen
             message = seen[:message]
-            time = message[:time].to_datetime
+            time = seen[:time].to_datetime
             diff = Rockbot.datetime_diff(time, DateTime.now)
 
             response = "#{nick} was last seen #{diff} ago saying: #{message}"
