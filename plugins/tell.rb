@@ -155,9 +155,11 @@ module TellPlugin
         notified = db[:tell_notify].where(target: target).first
         return if notified
 
-        pending = db[:tell].where(target: target, channel: channel).first(2)
-        if pending.size == 1
-          pending = pending[0]
+        pending = db[:tell].where(target: target, channel: channel)
+        num_pending = pending.count
+
+        if num_pending == 1
+          pending = pending.first
           source = pending[:source]
           message = pending[:message]
           time = pending[:time].to_datetime
@@ -169,7 +171,7 @@ module TellPlugin
           )
 
           clear_tells(db, target, channel)
-        elsif pending.size > 1
+        elsif num_pending > 1
           server.send_msg(
             event.channel,
             "#{event.source.nick}: You have #{num_pending} pending messages. " +
