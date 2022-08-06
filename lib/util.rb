@@ -109,6 +109,7 @@ module Rockbot
     http.use_ssl = uri.instance_of? URI::HTTPS
 
     request = Net::HTTP::Get.new uri
+    request['User-Agent'] = 'Mozilla/5.0 (compatible; rockbot/1.0)'
     response = http.request request
 
     Rockbot.log.debug { "Response code #{response.code}" }
