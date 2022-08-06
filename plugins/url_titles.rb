@@ -66,6 +66,7 @@ module UrlTitles
             begin
               response = Rockbot.get_uri uri
             rescue => e
+              Rockbot.log.error "Error fetching #{matches[0]}"
               Rockbot.log.error e
             end
 
