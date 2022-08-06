@@ -226,6 +226,7 @@ module Rockbot
       text.gsub!(/<\/?u>/, "\x1F")
       text.gsub!(/<\/?s>/, "\x1E")
       text.gsub!(/<\/?c>/, "\x03")
+      text.gsub!(/<r>/, "\x0F")
 
       color_re = /<c:(?<fg>\w+)(,(?<bg>\w+))?>/
       while m = color_re.match(text)

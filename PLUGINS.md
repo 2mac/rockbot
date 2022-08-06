@@ -141,6 +141,7 @@ Here are all the formats you can use:
 - `s`: strike-through
 - `c:fg,bg`: color, with foreground and background. If you wish not to set a
   background color, simply use `c:fg`.
+- `r`: reset all formatting
 
 You may use color names as shown above, or you may use the numeric codes for
 colors. These are all the color names recognized by rockbot:
