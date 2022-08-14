@@ -33,7 +33,7 @@ require 'socket'
 require 'openssl'
 
 module Rockbot
-  class BasicTransport
+  class BasicTransport # :nodoc: all
     def connect(host, port)
       @socket = TCPSocket.new(host, port)
     end
@@ -47,7 +47,7 @@ module Rockbot
     end
   end
 
-  class SecureTransport
+  class SecureTransport # :nodoc: all
     def connect(host, port)
       @socket = TCPSocket.new(host, port)
       @ssl = OpenSSL::SSL::SSLSocket.new @socket

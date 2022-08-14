@@ -34,7 +34,7 @@ require 'sequel'
 require_relative 'util'
 
 module Rockbot
-  def self.init_db(config)
+  def self.init_db(config) # :nodoc:
     config = config['database']
     if config.instance_of? String
       config = { 'type' => 'sqlite', 'database' => config }
@@ -46,11 +46,13 @@ module Rockbot
     )
   end
 
+  ##
+  # Returns the Sequel instance for rockbot's database.
   def self.database
     @database
   end
 
-  def self.close_db
+  def self.close_db # :nodoc:
     @database.disconnect
   end
 end

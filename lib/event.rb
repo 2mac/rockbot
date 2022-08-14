@@ -33,12 +33,19 @@ require_relative 'command'
 require_relative 'irc'
 
 module Rockbot
+  ##
+  # This generic class represents an event of which the IRC server has notified
+  # us. It contains the methods for registering event hooks.
   class Event
-    EVENT_TYPES = []
-    HOOKS = {}
-    THREADS = []
+    EVENT_TYPES = [] # :nodoc:
+    HOOKS = {} # :nodoc:
+    THREADS = [] # :nodoc:
 
     class << self
+      ##
+      # Adds a new hook for this type of event. This method is mainly used by
+      # subclasses of Event. The block passed to this method will be invoked
+      # each time the event occurs.
       def add_hook(&block)
         unless HOOKS[self]
           HOOKS[self] = []
@@ -47,15 +54,17 @@ module Rockbot
         HOOKS[self] << block
       end
 
+      ##
+      # Gets the array of hooks for this event type.
       def hooks
         HOOKS[self]
       end
 
-      def inherited(subclass)
+      def inherited(subclass) # :nodoc:
         EVENT_TYPES << subclass
       end
 
-      def loop(server, config)
+      def loop(server, config) # :nodoc:
         until server.done?
           line = server.gets
           Rockbot.log.debug { "recv: #{line}" }
@@ -64,7 +73,7 @@ module Rockbot
         end
       end
 
-      def process(line, server, config)
+      def process(line, server, config) # :nodoc:
         THREADS << Thread.new {
           begin
             msg = IRC::Message.new line
@@ -82,11 +91,18 @@ module Rockbot
         }
       end
 
+      ##
+      # Determines whether this type of event should fire for a given IRC
+      # command.
+      #
+      # Returns true if the event should fire.
       def responds_to?(command)
         false
       end
     end
 
+    ##
+    # Invoke all event hooks for this event.
     def fire(server, config)
       if should_process?(server, config)
         hooks = HOOKS[self.class]
@@ -100,47 +116,69 @@ module Rockbot
       end
     end
 
+    ##
+    # Determines whether to invoke the hooks for this event. While the correct
+    # IRC command may have caused this event, it is possible that specific
+    # details of the event disqualify it from processing.
     def should_process?(server, config)
       true
     end
   end
 
+  ##
+  # This event represents a user joining a channel.
   class JoinEvent < Event
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       command == 'JOIN'
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       Rockbot.log.info "Joined #{event.channel}" if event.source.nick == server.nick
     end
 
-    attr_reader :source, :channel
+    ##
+    # The IRC::User who joined.
+    attr_reader :source
 
-    def initialize(message)
+    ##
+    # The name of the channel that was joined.
+    attr_reader :channel
+
+    def initialize(message) # :nodoc:
       @source = IRC::User.new message.source
       @channel = message.parameters
     end
   end
 
+  ##
+  # This event represents a user parting a channel.
   class PartEvent < Event
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       command == 'PART'
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       Rockbot.log.info "Left #{event.channel}" if event.source.nick == server.nick
     end
 
-    attr_reader :source, :channel
+    ##
+    # The IRC::User who parted.
+    attr_reader :source
 
-    def initialize(message)
+    ##
+    # The name of the channel that was parted.
+    attr_reader :channel
+
+    def initialize(message) # :nodoc:
       @source = IRC::User.new message.source
       @channel = message.parameters
     end
   end
 
+  ##
+  # This event represents failure to join a channel.
   class JoinFailedEvent < Event
-    CODES = {
+    CODES = { # :nodoc:
       '403' => 'No such channel',
       '405' => 'Joined too many channels',
       '471' => 'Channel is full',
@@ -149,37 +187,55 @@ module Rockbot
       '475' => 'Bad password'
     }
 
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       CODES.include? command
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       Rockbot.log.error "Failed to join #{event.channel}: #{event.reason}"
     end
 
-    attr_reader :channel, :reason
+    ##
+    # The channel we attempted to join.
+    attr_reader :channel
 
-    def initialize(message)
+    ##
+    # Text describing the reason we failed.
+    attr_reader :reason
+
+    def initialize(message) # :nodoc:
       params = message.parameters.split
       @channel = params[1]
       @reason = CODES[message.command]
     end
   end
 
+  ##
+  # This event represents a user being kicked from a channel.
   class KickEvent < Event
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       command == 'KICK'
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       if event.target.casecmp? server.nick
         Rockbot.log.warn "Kicked from #{event.channel} by #{event.source.nick}"
       end
     end
 
-    attr_reader :source, :channel, :target
+    ##
+    # The IRC::User who kicked +target+.
+    attr_reader :source
 
-    def initialize(message)
+    ##
+    # The channel from which +target+ was kicked.
+    attr_reader :channel
+
+    ##
+    # The nick of the user who was kicked.
+    attr_reader :target
+
+    def initialize(message) # :nodoc:
       @source = IRC::User.new message.source
 
       params = message.parameters.split
@@ -188,15 +244,33 @@ module Rockbot
     end
   end
 
+  ##
+  # This event represents the use of a rockbot command. It is always
+  # accompanied by a MessageEvent which contained the command.
   class CommandEvent < Event
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       command = Rockbot::Command.from_name event.command
       command.call(event, server, config) if command
     end
 
-    attr_reader :source, :channel, :command, :args
+    ##
+    # The IRC::User who sent the command.
+    attr_reader :source
 
-    def initialize(message_event, server, config)
+    ##
+    # The name of the channel in which the command was sent.
+    attr_reader :channel
+
+    ##
+    # The name of the command (without the leading command character).
+    attr_reader :command
+
+    ##
+    # The arguments provided for the command (i.e. the rest of the message text
+    # after the command name.
+    attr_reader :args
+
+    def initialize(message_event, server, config) # :nodoc:
       @source = message_event.source
       @channel = message_event.channel
 
@@ -216,21 +290,37 @@ module Rockbot
     end
   end
 
+  ##
+  # This event represents a chat message.
   class MessageEvent < Event
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       command == 'PRIVMSG'
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       if event.command?(server, config)
         CommandEvent.new(event, server, config).fire(server, config)
       end
     end
 
-    attr_reader :source, :channel, :content, :action
+    ##
+    # The IRC::User who sent the message.
+    attr_reader :source
+
+    ##
+    # The name of the channel to which the message was sent.
+    attr_reader :channel
+
+    ##
+    # The message text.
+    attr_reader :content
+
+    ##
+    # Determines whether this message is an emote (i.e. +/me+).
+    attr_reader :action
     alias_method :action?, :action
 
-    def initialize(message)
+    def initialize(message) # :nodoc:
       @source = IRC::User.new message.source
 
       re = /(?<channel>\S+) :?(?<content>.*)/
@@ -247,6 +337,8 @@ module Rockbot
       end
     end
 
+    ##
+    # Determines whether this message contains a rockbot command.
     def command?(server, config)
       return false if action?
       return false if @content.empty?
@@ -255,26 +347,34 @@ module Rockbot
        /^#{server.nick}.?\s+\w+/ =~ @content)
     end
 
-    def should_process?(server, config)
+    def should_process?(server, config) # :nodoc:
       !config['ignore'].include? source.nick
     end
   end
 
+  ##
+  # This event represents a user nick change.
   class NickEvent < Event
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       command == 'NICK'
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       if event.source.nick == server.nick
         Rockbot.log.info "Nick changed to #{event.nick}"
         server.nick = event.nick
       end
     end
 
-    attr_reader :source, :nick
+    ##
+    # The IRC::User who changed nicks. +source.nick+ is the user's old nick.
+    attr_reader :source
 
-    def initialize(message)
+    ##
+    # The new nick.
+    attr_reader :nick
+
+    def initialize(message) # :nodoc:
       @source = IRC::User.new message.source
 
       re = /:?(?<nick>.*)/
@@ -283,29 +383,37 @@ module Rockbot
     end
   end
 
+  ##
+  # This event represents a ping from the server.
   class PingEvent < Event
-    def self.responds_to?(command)
+    def self.responds_to?(command) # :nodoc:
       command == 'PING'
     end
 
-    def self.hook(event, server, config)
+    def self.hook(event, server, config) # :nodoc:
       server.puts "PONG #{event.challenge}"
     end
 
+    ##
+    # The ping challenge which should be included in the response.
     attr_reader :challenge
 
-    def initialize(message)
+    def initialize(message) # :nodoc:
       @challenge = message.parameters
     end
   end
 
+  ##
+  # This event is fired when rockbot is shutting down.
   class UnloadEvent < Event
+    ##
+    # Invokes all hooks for this event.
     def fire
       super(nil, nil)
     end
   end
 
-  def self.set_default_hooks
+  def self.set_default_hooks # :nodoc:
     events_with_hook = Event::EVENT_TYPES.select { |c| c.methods.include? :hook }
 
     events_with_hook.each do |event_class|

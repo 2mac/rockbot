@@ -17,6 +17,15 @@ details of the configuration.
 If you want to use plugins which require a database, you'll need to install the
 `sequel` and `sqlite3` gems.
 
+Documentation
+-------------
+
+You can generate API documentation by running
+
+    $ rdoc
+
+The documentation will be placed in the `doc/` directory.
+
 License
 -------
 

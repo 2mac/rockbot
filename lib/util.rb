@@ -33,7 +33,12 @@ require 'date'
 require 'net/http'
 require 'pathname'
 
+##
+# This module contains all core rockbot functionality.
 module Rockbot
+  ##
+  # Produces a human-readable string of the difference between two DateTime
+  # instances. For example: an hour and 20 minutes.
   def self.datetime_diff(from, to)
     from = from.new_offset('+00:00')
     to = to.new_offset('+00:00')
@@ -84,18 +89,28 @@ module Rockbot
     response
   end
 
+  # The directory in which +rockbot.rb+ resides.
   ROOT_DIR = Pathname.new(__dir__).join('..').realpath
 
-  # Gets the absolute path in relation to rockbot.rb
+  ##
+  # Gets the absolute path in relation to +rockbot.rb+.
   def self.resolve_relative(path)
     path = Pathname.new path unless path.kind_of? Pathname
     path.absolute? ? path : ROOT_DIR.join(path)
   end
 
+  ##
+  # Determines whether a nick is in the ops list.
   def self.operator?(config, nick)
     config['ops'].map(&:downcase).include? nick.downcase
   end
 
+  ##
+  # Performs an HTTP GET request for the given URI, following redirections up
+  # to _redirect_\__limit_ times.
+  #
+  # Returns a Net::HTTPResponse of the final result or raises
+  # Net::ProtocolError.
   def self.get_uri(uri, redirect_limit=10)
     result = nil
 

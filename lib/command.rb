@@ -30,14 +30,24 @@
 ##
 
 module Rockbot
+  ##
+  # Represents a rockbot command.
   class Command
     @commands = {}
 
     class << self
+      ##
+      # Registers a new command.
+      #
+      # _command_ should be an instance of Command.
       def add_command(command)
         @commands[command.name] = command
       end
 
+      ##
+      # Looks up a Command by name or alias in the registry.
+      #
+      # Returns the Command or +nil+ if it could not be found.
       def from_name(name)
         @commands.each do |key, command|
           return command if name == key || command.aliases.include?(name)
@@ -46,20 +56,43 @@ module Rockbot
         nil
       end
 
+      ##
+      # Array of all registered rockbot commands.
       def commands
         @commands.values
       end
     end
 
+    ##
+    # The help text for this command.
     attr_accessor :help_text
-    attr_reader :name, :aliases
 
+    ##
+    # The name of this command.
+    attr_reader :name
+
+    ##
+    # Array of aliases for this command.
+    attr_reader :aliases
+
+    ##
+    # Create a new command with the name _name_. An array of _aliases_ may
+    # optionally be provided. The block given will be invoked each time this
+    # command is received.
     def initialize(name, aliases=[], &block)
       @name = name
       @block = block
       @aliases = aliases
     end
 
+    ##
+    # Invoke this command.
+    #
+    # _event_ should be a CommandEvent that was received.
+    #
+    # _server_ is the IRC::Server to which rockbot is connected.
+    #
+    # _config_ is the application Config.
     def call(event, server, config)
       @block.call(event, server, config)
     end

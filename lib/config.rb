@@ -32,7 +32,10 @@
 require 'json'
 
 module Rockbot
+  ##
+  # Represents the application configuration file.
   class Config
+    # Contains the default config options.
     DEFAULT_CONFIG = {
       'command_char' => ',',
       'ignore' => [],
@@ -44,6 +47,8 @@ module Rockbot
       'retries' => 10
     }
 
+    ##
+    # Create a new Config from a file path.
     def initialize(path)
       config = {}
 
@@ -67,6 +72,11 @@ module Rockbot
       @write_mutex = Thread::Mutex.new
     end
 
+    ##
+    # Validate this Config to make sure all required parameters are accounted
+    # for.
+    #
+    # Returns true if the configuration is valid.
     def validate
       valid = true
       required_params = [
@@ -90,6 +100,10 @@ module Rockbot
       valid
     end
 
+    ##
+    # Edit the configuration in a thread-safe manner. The Config object can be
+    # safely written to within the block passed to this method. After the block
+    # finishes, the configuration will be saved to the disk.
     def edit
       begin
         @write_mutex.lock
@@ -103,10 +117,15 @@ module Rockbot
       result
     end
 
+    ##
+    # Gets the config option indicated by _key_.
     def [](key)
       @data[key]
     end
 
+    ##
+    # Sets the config option _key_ to _value_. This should only be used with
+    # Config#edit.
     def []=(key, value)
       @data[key] = value
     end

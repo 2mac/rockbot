@@ -32,7 +32,7 @@
 require 'logger'
 
 module Rockbot
-  def self.init_logger(file, level)
+  def self.init_logger(file, level) # :nodoc:
     file = STDOUT unless file
     @logger = Logger.new file
     @logger.level = level
@@ -49,6 +49,8 @@ module Rockbot
     }
   end
 
+  ##
+  # Returns rockbot's Logger instance. Use it to write to the log file.
   def self.log
     @logger
   end

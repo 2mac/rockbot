@@ -36,11 +36,11 @@ require_relative 'log'
 require_relative 'util'
 
 module Rockbot
-  def self.load_plugins(config)
+  def self.load_plugins(config) # :nodoc:
     config['plugins'].each { |p| load_plugin(p, config) }
   end
 
-  def self.load_plugin(plugin_name, config)
+  def self.load_plugin(plugin_name, config) # :nodoc:
     loaded = false
 
     unless plugin_name.end_with? '.rb'

@@ -32,12 +32,27 @@
 require 'base64'
 
 module Rockbot
+  ##
+  # This module contains classes and methods related to the IRC protocol.
   module IRC
+    ##
+    # Represents a connection to an IRC server.
     class Server
+      ##
+      # rockbot's current nick
       attr_accessor :nick
-      attr_reader :done
-      alias_method :done?, :done
 
+      attr_reader :done # :nodoc:
+      alias_method :done?, :done # :nodoc:
+
+      ##
+      # Creates a new server.
+      #
+      # _host_ and _port_ are the server's hostname and IRC port number
+      # respectively.
+      #
+      # _transport_ is one of BasicTransport or SecureTransport defined in
+      # +transport.rb+.
       def initialize(host, port, transport)
         @host = host
         @port = port
@@ -46,6 +61,13 @@ module Rockbot
         @done = false
       end
 
+      ##
+      # Connect to the IRC server.
+      #
+      # _config_ is the Rockbot::Config representing the application config.
+      # This is used to determine the nick and any authentication details.
+      #
+      # Raises an exception if the connection fails.
       def connect(config)
         Rockbot.log.info "Connecting to #{@host}/#{@port}..."
         @socket = @transport.connect(@host, @port)
@@ -106,6 +128,10 @@ module Rockbot
         end
       end
 
+      ##
+      # Disconnect from the IRC server.
+      #
+      # The optional _message_ parameter will be used as the quit message.
       def disconnect(message='')
         Rockbot.log.info "Disconnecting from server."
         self.puts "QUIT :#{message}"
@@ -123,6 +149,8 @@ module Rockbot
         end
       end
 
+      ##
+      # Writes a line of text verbatim to the IRC server.
       def puts(text)
         @write_mutex.synchronize {
           Rockbot.log.debug { "send: #{text}" }
@@ -130,21 +158,51 @@ module Rockbot
         }
       end
 
+      ##
+      # Reads the next incoming line of text from the IRC server.
+      #
+      # Returns the line, without the trailing newline character.
       def gets
         @socket.gets.chomp
       end
 
+      ##
+      # Join one or more channels.
+      #
+      # _channels_ is an array of channel names.
+      #
+      # This method will not return success or failure. Instead, the server
+      # will later send a JOIN message or else a failure code which will be
+      # captured by the event loop.
       def join(channels)
         channel_string = channels.join ','
         self.puts "JOIN #{channel_string}"
       end
 
+      ##
+      # Part one or more channels.
+      #
+      # _channels_ is an array of channel names.
+      #
+      # This method will not return success or failure. Instead, the server
+      # will later send a PART message which will be captured by the event
+      # loop.
       def part(channels)
         channel_string = channels.join ','
         self.puts "PART #{channel_string}"
       end
 
+      ##
       # Splits a multi-line or long command into multiple commands and sends it
+      # to the IRC server.
+      #
+      # _prefix_ represents the beginning of each command that is sent.
+      #
+      # _content_ is the payload which will be split into multiple commands if
+      # necessary, always prefixed by _prefix_.
+      #
+      # _max_\__len_ may be set to determine how many characters of content may
+      # be included in each command. The default is 400.
       def send_cmd(prefix, content, max_len=400)
         content.lines(chomp: true).each do |line|
           index = 0
@@ -155,26 +213,52 @@ module Rockbot
         end
       end
 
+      ##
+      # Send a message to a channel or user.
       def send_msg(target, content)
         send_cmd("PRIVMSG #{target} :", content)
       end
 
+      ##
+      # Send a notice to a channel or user.
+      #
+      # Note that the IRC protocol specifies that no client should ever
+      # automatically reply to a notice.
       def send_notice(target, content)
         send_cmd("NOTICE #{target} :", content)
       end
 
+      ##
+      # Send an emote to a channel or user.
+      #
+      # This is equivalent to the +/me+ command in most IRC clients.
       def send_emote(target, content)
         send_msg(target, "\x01ACTION #{content}\x01")
       end
 
+      ##
+      # Change rockbot's nick.
+      #
+      # This method does not return success or failure. Instead, the server
+      # will later send a NICK command or else a failure code which will be
+      # captured by the event loop.
       def set_nick(nick)
         self.puts "NICK #{nick}"
       end
     end
 
+    ##
+    # Represents an IRC message coming from the server.
+    #
+    # This is not to be confused with a chat message from a channel or user.
+    # In IRC protocol language, a message is any line coming from the server,
+    # whether it is a chat message, nick change, join notification, or any
+    # other traffic.
     class Message
       attr_reader :tags, :source, :command, :parameters
 
+      ##
+      # Creates a new Message by parsing a raw line of text.
       def initialize(text)
         re = /(@(?<tag>\S*) )?(:(?<src>\S*) )?(?<cmd>\S*) ?(?<param>.*)/
         matches = re.match text
@@ -186,9 +270,13 @@ module Rockbot
       end
     end
 
+    ##
+    # Represents a user on the IRC network.
     class User
       attr_reader :nick, :username, :host
 
+      ##
+      # Creates a new User by parsing the +source+ of a message.
       def initialize(source)
         re = /(?<nick>.*)!(?<user>.*)@(?<host>.*)/
         matches = re.match source
@@ -199,7 +287,7 @@ module Rockbot
       end
     end
 
-    COLOR_MAP = {
+    COLOR_MAP = { # :nodoc:
       'white' => '00',
       'black' => '01',
       'blue' => '02',
@@ -220,6 +308,27 @@ module Rockbot
       'lgrey' => '15'
     }
 
+    ##
+    # Format a line of text using HTML-like markup.
+    #
+    # Example:
+    #   Rockbot::IRC.format "<b>This text is bold!</b>"
+    #
+    # Supported tags:
+    #
+    # * +b+: bold
+    # * +i+: italic
+    # * +u+: underline
+    # * +s+: strike-through
+    # * +r+: reset all formatting
+    # * +c+: color
+    #
+    # Color is specified as: +<c:fg,bg>content</c>+, where +fg+ and +bg+ are
+    # the foreground and background colors respectively. Numeric color codes
+    # are accepted as well as some common color names. This is documented
+    # further in the plugin developer guide.
+    #
+    # Returns the formatted text string, ready to be sent.
     def self.format(text)
       text = text.gsub(/<\/?b>/, "\x02")
       text.gsub!(/<\/?i>/, "\x1D")
