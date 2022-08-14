@@ -3,7 +3,6 @@ encoding: UTF-8
 static_path: []
 rdoc_include:
 - "."
-- "/home/david/git/rockbot"
 charset: UTF-8
 exclude: !ruby/regexp /~\z|\.orig\z|\.rej\z|\.bak\z|\.gemspec\z|(?-mix:^README$)|(?-mix:COPYING)|(?-mix:^rockbot.(rb|json)$)|(?-mix:^plugins\/)/
 hyperlink_all: false
