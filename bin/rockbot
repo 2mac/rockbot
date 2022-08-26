@@ -30,13 +30,7 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require_relative 'lib/log'
-require_relative 'lib/command'
-require_relative 'lib/config'
-require_relative 'lib/event'
-require_relative 'lib/irc'
-require_relative 'lib/plugin'
-require_relative 'lib/transport'
+require 'rockbot'
 
 ART = <<'EOF'
                     __   __          __ 
@@ -47,7 +41,7 @@ ART = <<'EOF'
 EOF
 
 APP_NAME = 'rockbot'
-APP_VERSION = '0.0.0'
+APP_VERSION = '1.0'
 APP_REPO = 'https://github.com/2mac/rockbot'
 
 config_path = ARGV.shift || 'rockbot.json'
@@ -67,7 +61,7 @@ end
 have_database = config['database'] != nil
 if have_database
   begin
-    require_relative 'lib/database'
+    require 'rockbot/database'
     log.info "Loading database..."
     Rockbot.init_db config
   rescue => e

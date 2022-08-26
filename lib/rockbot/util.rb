@@ -82,18 +82,18 @@ module Rockbot
       response = weeks == 1 ? "a week" : "#{weeks} weeks"
       if wdays > 0
         response << " and "
-        response << wdays == 1 ? "a day" : "#{wdays} days"
+        response << (wdays == 1 ? "a day" : "#{wdays} days")
       end
     end
 
     response
   end
 
-  # The directory in which +rockbot.rb+ resides.
-  ROOT_DIR = Pathname.new(__dir__).join('..').realpath
+  # The root of the rockbot project.
+  ROOT_DIR = Pathname.new(__dir__).join('../..').realpath
 
   ##
-  # Gets the absolute path in relation to +rockbot.rb+.
+  # Gets the absolute path in relation to the root of the project.
   def self.resolve_relative(path)
     path = Pathname.new path unless path.kind_of? Pathname
     path.absolute? ? path : ROOT_DIR.join(path)

@@ -4,7 +4,7 @@ static_path: []
 rdoc_include:
 - "."
 charset: UTF-8
-exclude: !ruby/regexp /~\z|\.orig\z|\.rej\z|\.bak\z|\.gemspec\z|(?-mix:^README$)|(?-mix:COPYING)|(?-mix:^rockbot.(rb|json)$)|(?-mix:^plugins\/)/
+exclude: !ruby/regexp /~\z|\.orig\z|\.rej\z|\.bak\z|\.gemspec\z|(?-mix:^README$)|(?-mix:COPYING)|(?-mix:^rockbot.(rb|json)$)|(?-mix:^lib\/rockbot\/plugins\/)/
 hyperlink_all: false
 line_numbers: false
 locale:

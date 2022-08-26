@@ -29,50 +29,11 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
-require 'pathname'
-
-require_relative 'config'
-require_relative 'log'
-require_relative 'util'
-
-module Rockbot
-  def self.load_plugins(config) # :nodoc:
-    config['plugins'].each { |p| load_plugin(p, config) }
-  end
-
-  def self.load_plugin(plugin_name, config) # :nodoc:
-    loaded = false
-
-    unless plugin_name.end_with? '.rb'
-      plugin_name += '.rb'
-    end
-
-    paths = config['plugin_path'] + ['plugins/']
-
-    paths.each do |path|
-      dir = Pathname.new(path)
-      unless dir.absolute?
-        dir = Rockbot.resolve_relative dir
-      end
-
-      plugin_file = dir.join(plugin_name)
-      if plugin_file.file?
-        @logger.debug { "Found #{plugin_name} at #{plugin_file.to_s}" }
-
-        begin
-          Kernel.require plugin_file
-        rescue => e
-          Rockbot.log.error "Error loading #{plugin_name}"
-          Rockbot.log.error e
-        end
-
-        loaded = true # always set this to suppress the "failed to find" message
-        break
-      end
-    end
-
-    unless loaded
-      @logger.error "Failed to find #{plugin_name} in the plugin path"
-    end
-  end
-end
+require_relative 'rockbot/command'
+require_relative 'rockbot/config'
+require_relative 'rockbot/event'
+require_relative 'rockbot/irc'
+require_relative 'rockbot/log'
+require_relative 'rockbot/plugin'
+require_relative 'rockbot/transport'
+require_relative 'rockbot/util'
