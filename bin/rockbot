@@ -45,7 +45,7 @@ APP_VERSION = '1.0'
 APP_REPO = 'https://github.com/2mac/rockbot'
 
 config_path = ARGV.shift || 'rockbot.json'
-config = Rockbot::Config.new Rockbot.resolve_relative(config_path)
+config = Rockbot::Config.new config_path
 
 Rockbot.init_logger(config['log_file'], config['log_level'])
 log = Rockbot.log

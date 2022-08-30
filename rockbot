@@ -1,2 +1,2 @@
 #!/bin/sh
-ruby -Ilib bin/rockbot
+ruby -Ilib bin/rockbot "$@"
