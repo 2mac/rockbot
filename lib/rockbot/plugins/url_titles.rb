@@ -42,7 +42,7 @@ module UrlTitles
       matches = TITLE_RE.match html
       text = matches ? matches[:title].gsub(/(\R|&nbsp;)/,' ').strip : nil
       if text
-        text = CGI.unescapeHTML text
+        text = CGI.unescapeHTML(text).force_encoding(Encoding::UTF_8)
         if text.length > MAX_LENGTH
           text = text[0, MAX_LENGTH]
           index = text.rindex ' '
