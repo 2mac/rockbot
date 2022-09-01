@@ -270,9 +270,14 @@ module Rockbot
     # after the command name.
     attr_reader :args
 
+    ##
+    # The time at which the event occurred.
+    attr_reader :time
+
     def initialize(message_event, server, config) # :nodoc:
       @source = message_event.source
       @channel = message_event.channel
+      @time = message_event.time
 
       content = message_event.content
 
@@ -320,8 +325,13 @@ module Rockbot
     attr_reader :action
     alias_method :action?, :action
 
+    ##
+    # The time at which the event occurred.
+    attr_reader :time
+
     def initialize(message) # :nodoc:
       @source = IRC::User.new message.source
+      @time = message.time
 
       re = /(?<channel>\S+) :?(?<content>.*)/
       matches = re.match message.parameters

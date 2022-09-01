@@ -255,11 +255,13 @@ module Rockbot
     # whether it is a chat message, nick change, join notification, or any
     # other traffic.
     class Message
-      attr_reader :tags, :source, :command, :parameters
+      attr_reader :tags, :source, :command, :parameters, :time
 
       ##
       # Creates a new Message by parsing a raw line of text.
       def initialize(text)
+        @time = DateTime.now
+
         re = /(@(?<tag>\S*) )?(:(?<src>\S*) )?(?<cmd>\S*) ?(?<param>.*)/
         matches = re.match text
 

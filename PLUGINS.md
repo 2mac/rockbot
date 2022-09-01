@@ -82,6 +82,7 @@ use:
 - `channel`: which channel the command was received from;
 - `command`: the name of the command as it was given by the user
 - `args`: the rest of the input that came after the command name
+- `time`: a `DateTime` of the time at which the command was received
 
 Configuration
 -------------
@@ -198,6 +199,7 @@ Attributes:
 - `action?`: whether this message was an action (i.e. `/me`)
 - `content`: the message text
 - `command?(server, config)`: tells whether this message is a command
+- `time`: a `DateTime` of the time at which the message was received
 
 ### `NickEvent`
 
