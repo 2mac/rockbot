@@ -99,7 +99,6 @@ module Rockbot
         fail_reason = nil
         until registered || fail_reason
           line = self.gets
-          Rockbot.log.debug { "recv: #{line}" }
 
           msg = Message.new line
           case msg.command
@@ -142,11 +141,7 @@ module Rockbot
 
         @done = true
         self.puts "QUIT :#{message}"
-
-        loop do
-          line = self.gets
-          Rockbot.log.debug { "recv: #{line}" }
-        end
+        loop { self.gets }
       rescue
       # ignore
       ensure
@@ -193,6 +188,7 @@ module Rockbot
       # Returns the line, without the trailing newline character.
       def gets
         line = @socket.gets.chomp
+        Rockbot.log.debug { "recv: #{line}" }
         @last_contact_time = Time.now.to_i
         line
       end

@@ -65,12 +65,7 @@ module Rockbot
       end
 
       def loop(server, config) # :nodoc:
-        until server.done?
-          line = server.gets
-          Rockbot.log.debug { "recv: #{line}" }
-
-          process(line, server, config)
-        end
+        process(server.gets, server, config) until server.done?
       end
 
       def process(line, server, config) # :nodoc:
