@@ -45,6 +45,9 @@ module Rockbot
       attr_reader :done # :nodoc:
       alias_method :done?, :done # :nodoc:
 
+      attr_reader :timed_out # :nodoc:
+      alias_method :timed_out?, :timed_out # :nodoc:
+
       ##
       # Creates a new server.
       #
@@ -59,6 +62,7 @@ module Rockbot
         @transport = transport
         @write_mutex = Thread::Mutex.new
         @done = false
+        @timed_out = false
       end
 
       ##
@@ -122,6 +126,7 @@ module Rockbot
 
         if registered
           Rockbot.log.info "Connected!"
+          start_ping_loop config
         else
           @transport.disconnect
           raise fail_reason
@@ -134,19 +139,43 @@ module Rockbot
       # The optional _message_ parameter will be used as the quit message.
       def disconnect(message='')
         Rockbot.log.info "Disconnecting from server."
-        self.puts "QUIT :#{message}"
-        @done = true
 
-        begin
-          loop do
-            line = self.gets
-            Rockbot.log.debug { "recv: #{line}" }
-          end
-        rescue
-          # ignore
-        ensure
-          @transport.disconnect
+        @done = true
+        self.puts "QUIT :#{message}"
+
+        loop do
+          line = self.gets
+          Rockbot.log.debug { "recv: #{line}" }
         end
+      rescue
+      # ignore
+      ensure
+        @transport.disconnect
+        @ping_thread.kill
+      end
+
+      def start_ping_loop(config) # :nodoc:
+        @ping_thread = Thread.new {
+          timeout = config['ping_timeout']
+          half = timeout / 2
+          index = 0
+
+          loop do
+            diff = Time.now.to_i - @last_contact_time
+            if diff > timeout
+              Rockbot.log.error "Ping timeout: #{diff} seconds"
+              @timed_out = true
+              @transport.disconnect
+              break
+            elsif diff >= half
+              index += 1
+              self.puts "PING #{index}"
+              sleep half
+            else
+              sleep half - diff
+            end
+          end
+        }
       end
 
       ##
@@ -163,7 +192,9 @@ module Rockbot
       #
       # Returns the line, without the trailing newline character.
       def gets
-        @socket.gets.chomp
+        line = @socket.gets.chomp
+        @last_contact_time = Time.now.to_i
+        line
       end
 
       ##

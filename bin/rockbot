@@ -121,6 +121,7 @@ else
 end
 
 done = false
+timed_out = false
 max_retries = config['retries']
 try = 0
 exit_code = 0
@@ -140,11 +141,12 @@ begin
     done = true
   ensure
     done = done || server.done?
+    timed_out = server.timed_out?
     server.disconnect(config['quit_msg']) unless server.done?
   end
 rescue => e
   break if done
-  log.error e
+  log.error e unless timed_out
 
   try += 1
   if try <= max_retries

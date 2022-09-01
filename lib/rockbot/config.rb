@@ -41,6 +41,7 @@ module Rockbot
       'ignore' => [],
       'log_level' => 'INFO',
       'ops' => [],
+      'ping_timeout' => 300,
       'plugins' => [],
       'plugin_path' => [],
       'quit_msg' => '',

@@ -35,6 +35,8 @@ The available options are as follows:
   will be sent to the console.
 - `ops` - A list of users from which to accept admin commands.
 - `nick` - IRC nick for this instance of rockbot.
+- `ping_timeout` - Disconnect from the server if we've heard nothing for this
+  many seconds. (default: 300)
 - `plugin_path` - A list of directories in which to search for plugins.
 - `plugins` - A list of plugins to load by name or file.
 - `retries` - Number of times to reconnect to the server after an error.
