@@ -30,6 +30,10 @@
 ##
 
 module SeenPlugin
+  LOG = {}
+
+  Entry = Struct.new(:message, :time)
+
   class << self
     def setup_db
       db = Rockbot.database
@@ -51,6 +55,29 @@ module SeenPlugin
       end
     end
 
+    def load_log
+      db = Rockbot.database
+      db[:seen].all.each do |row|
+        channel = row[:channel]
+        LOG[channel] = {} unless LOG.include? channel
+        LOG[channel][row[:nick]] = Entry.new(row[:message],
+                                             row[:time].to_datetime)
+      end
+    end
+
+    def save_log(event, server, config)
+      db = Rockbot.database
+
+      db[:seen].delete
+
+      LOG.each_key do |channel|
+        LOG[channel].each_key do |nick|
+          entry = LOG[channel][nick]
+          db[:seen].insert [nick, channel, entry[:message], entry[:time]]
+        end
+      end
+    end
+
     def receive(event, server, config)
       if event.channel.start_with? '#'
         content = event.content
@@ -59,11 +86,8 @@ module SeenPlugin
         nick = event.source.nick.downcase
         channel = event.channel.downcase
 
-        db = Rockbot.database
-        db.transaction do
-          db[:seen].where(nick: nick, channel: channel).delete
-          db[:seen].insert [nick, channel, content, DateTime.now]
-        end
+        LOG[channel] = {} unless LOG.include? channel
+        LOG[channel][nick] = Entry.new(content, event.time)
       end
     end
 
@@ -79,13 +103,12 @@ module SeenPlugin
           server.send_msg(channel, "#{event.source.nick}: That's me!")
         else
           response = ''
-          db = Rockbot.database
-          seen = db[:seen].where(nick: nick.downcase, channel: channel.downcase).first
+          seen = LOG.dig(channel.downcase, nick.downcase)
 
           if seen
             message = seen[:message]
-            time = seen[:time].to_datetime
-            diff = Rockbot.datetime_diff(time, DateTime.now)
+            time = seen[:time]
+            diff = Rockbot.datetime_diff(time, event.time)
 
             response = "#{nick} was last seen #{diff} ago saying: #{message}"
           else
@@ -99,6 +122,7 @@ module SeenPlugin
 
     def load
       setup_db
+      load_log
 
       Rockbot::MessageEvent.add_hook &SeenPlugin.method(:receive)
 
@@ -106,6 +130,8 @@ module SeenPlugin
       seen_cmd.help_text = "Queries for the last time a user was seen speaking\n" +
                            "Usage: seen <nick>"
       Rockbot::Command.add_command seen_cmd
+
+      Rockbot::UnloadEvent.add_hook &SeenPlugin.method(:save_log)
 
       Rockbot.log.info "Last seen message plugin loaded"
     end
