@@ -29,7 +29,14 @@
 ##  THE USE OF OR OTHER DEALINGS IN THE WORK.
 ##
 
+require 'set'
+
 module TellPlugin
+  TELLS = {}
+  NOTIFIED = Set.new
+
+  Tell = Struct.new(:source, :channel, :target, :message, :time)
+
   class << self
     def setup_db
       db = Rockbot.database
@@ -54,6 +61,37 @@ module TellPlugin
           primary_key [:target]
         end
       end
+    end
+
+    def load_db
+      db = Rockbot.database
+
+      db[:tell].all.each do |row|
+        tell = Tell.new(
+          row[:source],
+          row[:channel],
+          row[:target],
+          row[:message],
+          row[:time].to_datetime
+        )
+
+        TELLS[tell.target] = [] unless TELLS.include? tell.target
+        TELLS[tell.target] << tell
+      end
+
+      db[:tell_notify].all.each { |nick| NOTIFIED << nick }
+    end
+
+    def save_db(event, server, config)
+      db = Rockbot.database
+
+      db[:tell].delete
+      TELLS.each do |target, tells|
+        tells.each { |tell| db[:tell].insert tell.to_h }
+      end
+
+      db[:tell_notify].delete
+      NOTIFIED.each { |nick| db[:tell_notify].insert nick }
     end
 
     def tell(event, server, config)
@@ -82,27 +120,17 @@ module TellPlugin
           matches = re.match event.args
           message = matches[:message].strip
 
-          db = Rockbot.database
-          existing = db[:tell].where(
-            channel: channel,
-            target: target,
-            message: message
-          ) { lower(source()) =~ source.downcase }
+          TELLS[target] = [] unless TELLS.include? target
+          existing = TELLS[target].select do |tell|
+            tell.channel == channel &&
+              tell.source.downcase == source.downcase &&
+              tell.message == message
+          end
 
-          Rockbot.log.debug { existing.sql }
-
-          unless existing.first
-            db.transaction do
-              db[:tell].insert(
-                source: source,
-                channel: channel,
-                target: target,
-                message: message,
-                time: DateTime.now
-              )
-
-              db[:tell_notify].where(target: target).delete
-            end
+          if existing.empty?
+            tell = Tell.new(source, channel, target, message, event.time)
+            TELLS[target] << tell
+            NOTIFIED.delete target
           end
 
           server.send_notice(
@@ -115,62 +143,56 @@ module TellPlugin
       end
     end
 
-    def clear_tells(db, target, channel=nil)
-      tells = db[:tell].where(target: target)
-      tells = tells.where(channel: channel) if channel
-
-      tells.delete
-    end
-
     def showtells(event, server, config)
       target = event.source.nick.downcase
-      db = Rockbot.database
-      tells = db[:tell].where(target: target).all
+      tells = TELLS[target] || []
 
       if tells.empty?
         server.send_msg(event.source.nick, "You have no pending messages.")
       else
-        tells.each do |tell|
-          source = tell[:source]
-          message = tell[:message]
-          time = tell[:time].to_datetime
-          diff = Rockbot.datetime_diff(time, DateTime.now)
+        TELLS[target] = []
+        thread = Thread.new {
+          tells.each do |tell|
+            diff = Rockbot.datetime_diff(tell.time, event.time)
+            server.send_msg(
+              event.source.nick,
+              "#{diff} ago, #{tell.source} told you: #{tell.message}"
+            )
 
-          server.send_msg(
-            event.source.nick,
-            "#{diff} ago, #{source} told you: #{message}"
-          )
-        end
+            sleep 2
+          end
 
-        clear_tells(db, target)
+          Rockbot::Event::THREADS.delete Thread.current
+        }
+
+        Rockbot::Event::THREADS << thread
       end
     end
 
     def check_notify(event, server, config)
       if event.channel.start_with? '#'
-        channel = event.channel.downcase
         target = event.source.nick.downcase
+        return if NOTIFIED.include? target
 
-        db = Rockbot.database
-        notified = db[:tell_notify].where(target: target).first
-        return if notified
+        pending = TELLS[target]
+        return unless pending
 
-        pending = db[:tell].where(target: target, channel: channel)
-        num_pending = pending.count
+        channel = event.channel.downcase
+        pending = pending.select { |tell| tell.channel == channel }
+        num_pending = pending.size
 
         if num_pending == 1
-          pending = pending.first
-          source = pending[:source]
-          message = pending[:message]
-          time = pending[:time].to_datetime
-          diff = Rockbot.datetime_diff(time, DateTime.now)
+          pending = pending[0]
+          TELLS[target].delete pending
+
+          source = pending.source
+          message = pending.message
+          diff = Rockbot.datetime_diff(pending.time, event.time)
 
           server.send_msg(
             event.channel,
             "#{event.source.nick}: #{diff} ago, #{source} told you: #{message}"
           )
-
-          clear_tells(db, target, channel)
         elsif num_pending > 1
           server.send_msg(
             event.channel,
@@ -178,13 +200,14 @@ module TellPlugin
             "Type #{config['command_char']}showtells to read them."
           )
 
-          db[:tell_notify].insert [target]
+          NOTIFIED << target
         end
       end
     end
 
     def load
       setup_db
+      load_db
 
       Rockbot::MessageEvent.add_hook &TellPlugin.method(:check_notify)
 
@@ -196,6 +219,8 @@ module TellPlugin
       showtells_cmd = Rockbot::Command.new('showtells', &TellPlugin.method(:showtells))
       showtells_cmd.help_text = "Reads all pending 'tell' messages I have for you"
       Rockbot::Command.add_command showtells_cmd
+
+      Rockbot::UnloadEvent.add_hook &TellPlugin.method(:save_db)
 
       Rockbot.log.info "Tell plugin loaded"
     end
