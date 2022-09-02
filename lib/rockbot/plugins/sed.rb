@@ -30,7 +30,7 @@
 ##
 
 module SedPlugin
-  RE = /^s\/(?<pattern>([^\/]|\\\/)+)\/(?<repl>([^\/]|\\\/)+)(\/(?<suffix>\w+)?)?/
+  RE = /^s\/(?<pattern>(\\\/|[^\/])+)\/(?<repl>(\\\/|[^\/])+)(\/(?<suffix>\w+)?)?/
   LOG = {}
   MAX_LOG = 1000
   MAX_RESULT = 360
@@ -51,7 +51,7 @@ module SedPlugin
 
         if m
           pattern = Regexp.new m[:pattern]
-          replacement = Rockbot::IRC.format "<b>#{m[:repl]}</b>"
+          replacement = "\x02#{m[:repl].gsub('\\/','/')}\x02"
           suffix = m[:suffix] || ''
 
           method = suffix.include?('g') ? :gsub : :sub
