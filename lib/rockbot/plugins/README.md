@@ -30,6 +30,17 @@ roll
 This plugin adds the `roll` command for rolling dice and `coin` command for
 flipping coins.
 
+sed
+---
+
+This plugin allows `sed`-style string substitutions. Example:
+
+```
+<user> beep
+<user> s/e/o/g
+<rockbot> Correction: <user> boop
+```
+
 seen
 ----
 
