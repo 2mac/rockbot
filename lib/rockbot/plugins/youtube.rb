@@ -39,19 +39,6 @@ module YoutubePlugin
   TIME_RE = /P((?<d>\d+)D)?T((?<h>\d+)H)?((?<m>\d+)M)?(?<s>\d+)S/
   YOUTUBE_URLS = /https?:\/\/(www\.)?youtu(\.be\/|be\.com\/(watch\?v=|shorts\/))(?<id>[^?&]+)/
 
-  class Fetcher
-    attr_reader :pattern
-
-    def initialize(pattern, &block)
-      @pattern = pattern
-      @block = block
-    end
-
-    def fetch(uri, config)
-      @block.call(uri, config)
-    end
-  end
-
   class << self
     def request(type, params)
       params[:key] = @key
@@ -149,7 +136,8 @@ module YoutubePlugin
       Rockbot::Command.add_command yt_cmd
 
       if Object.const_defined? 'UrlTitles'
-        fetcher = Fetcher.new(YOUTUBE_URLS, &YoutubePlugin.method(:fetch_title))
+        fetcher = UrlTitles::Fetcher.new(YOUTUBE_URLS,
+                                         &YoutubePlugin.method(:fetch_title))
         UrlTitles::FETCHERS << fetcher
       end
 

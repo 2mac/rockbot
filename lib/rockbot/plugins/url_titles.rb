@@ -41,12 +41,13 @@ module UrlTitles
   class Fetcher
     attr_reader :pattern
 
-    def initialize(pattern)
+    def initialize(pattern, &block)
       @pattern = pattern
+      @block = block
     end
 
     def fetch(uri, config)
-      raise NotImplementedError
+      @block.call(uri, config)
     end
   end
 
