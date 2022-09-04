@@ -36,6 +36,19 @@ module UrlTitles
   URL_RE = /https?:\/\/\S+\.\S+/
   TITLE_RE = /<title>(?<title>.*?)<\/title>/m
   MAX_LENGTH = 100
+  FETCHERS = []
+
+  class Fetcher
+    attr_reader :pattern
+
+    def initialize(pattern)
+      @pattern = pattern
+    end
+
+    def fetch(uri, config)
+      raise NotImplementedError
+    end
+  end
 
   class << self
     def title(html)
@@ -54,6 +67,15 @@ module UrlTitles
       text
     end
 
+    def fetch(uri)
+      response = Rockbot.get_uri uri
+      type = response['Content-Type']
+      Rockbot.log.debug { "type=#{type}" }
+      text = title response.body if type.include? 'text/html'
+
+      text ? Rockbot::IRC.format("<b>#{text}</b>") : nil
+    end
+
     def load
       Rockbot::MessageEvent.add_hook do |event, server, config|
         unless event.command?(server, config)
@@ -64,24 +86,27 @@ module UrlTitles
             uri = URI(matches[0])
 
             begin
-              response = Rockbot.get_uri uri
+              response = nil
+              FETCHERS.each do |fetcher|
+                if fetcher.pattern =~ uri.to_s
+                  response = fetcher.fetch(uri, config)
+                  break
+                end
+              end
+
+              unless response
+                response = fetch uri
+              end
             rescue => e
               Rockbot.log.error "Error fetching #{matches[0]}"
               Rockbot.log.error e
             end
 
             if response
-              type = response['Content-Type']
-              Rockbot.log.debug { "type=#{type}" }
-              text = title response.body if type.include? 'text/html'
-
-              if text
-                text = Rockbot::IRC.format "<b>#{text}</b>"
-                server.send_msg(
-                  event.channel,
-                  "(#{event.source.nick}) ^ #{text}"
-                )
-              end
+              server.send_msg(
+                event.channel,
+                "(#{event.source.nick}) ^ #{response}"
+              )
             end
           end
         end

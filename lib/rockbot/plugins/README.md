@@ -71,4 +71,6 @@ the channel for others to see before they click.
 YouTube
 -------
 
-This plugin adds a command to search for YouTube videos.
+This plugin adds a command to search for YouTube videos. If loaded after the
+URL titles plugin, it will override the usual title with more details about
+YouTube video URLs.

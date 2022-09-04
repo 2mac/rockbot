@@ -36,6 +36,20 @@ module YoutubePlugin
   BASE_URL = 'https://www.googleapis.com/youtube/v3/'
   WATCH_URL = 'https://youtu.be/'
   TIME_RE = /P((?<d>\d+)D)?T((?<h>\d+)H)?((?<m>\d+)M)?(?<s>\d+)S/
+  YOUTUBE_URLS = /https?:\/\/(www\.)?youtu(\.be\/|be\.com\/watch\?v=)(?<id>[^&]+)/
+
+  class Fetcher
+    attr_reader :pattern
+
+    def initialize(pattern, &block)
+      @pattern = pattern
+      @block = block
+    end
+
+    def fetch(uri, config)
+      @block.call(uri, config)
+    end
+  end
 
   class << self
     def request(type, params)
@@ -49,9 +63,7 @@ module YoutubePlugin
 
     def search(title)
       data = request('search', {q: title, type: 'video', part: 'snippet'})
-      data = data['items'][0]
-
-      data['id']['videoId']
+      data.dig('items', 0, 'id', 'videoId')
     end
 
     def details(video_id)
@@ -122,11 +134,23 @@ module YoutubePlugin
       server.send_msg(event.channel, "(#{event.source.nick}) #{response}")
     end
 
+    def fetch_title(uri, config)
+      @key = config['youtube']['key'] unless @key
+
+      m = YOUTUBE_URLS.match uri.to_s
+      format(details(m[:id]))
+    end
+
     def load
       yt_cmd = Rockbot::Command.new('youtube', ['yt'],
                                     &YoutubePlugin.method(:lookup))
       yt_cmd.help_text = ''
       Rockbot::Command.add_command yt_cmd
+
+      if Object.const_defined? 'UrlTitles'
+        fetcher = Fetcher.new(YOUTUBE_URLS, &YoutubePlugin.method(:fetch_title))
+        UrlTitles::FETCHERS << fetcher
+      end
 
       Rockbot.log.info "YouTube plugin loaded"
     end
