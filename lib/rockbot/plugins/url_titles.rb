@@ -88,9 +88,13 @@ module UrlTitles
             begin
               response = nil
               FETCHERS.each do |fetcher|
-                if fetcher.pattern =~ uri.to_s
-                  response = fetcher.fetch(uri, config)
-                  break
+                begin
+                  if fetcher.pattern =~ uri.to_s
+                    response = fetcher.fetch(uri, config)
+                    break
+                  end
+                rescue => e
+                  Rockbot.log.error e
                 end
               end
 
@@ -112,7 +116,7 @@ module UrlTitles
         end
       end
 
-      Rockbot.log.info "URL Titles plugin loaded"
+      Rockbot.log.info "URL titles plugin loaded"
     end
   end
 end
