@@ -1,3 +1,4 @@
+# coding: utf-8
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
 ##  Copyright (C) 2022 David McMackins II
@@ -91,7 +92,7 @@ module YoutubePlugin
     end
 
     def format(video, include_url=false)
-      result = Rockbot::IRC.format '<c:white,red>You<c:black,white>Tube<r>'
+      result = Rockbot::IRC.format '<c:white,red> ▶ <c:black,white>YouTube<r>'
       result << " - \x02#{video[:title]}\x02"
 
       if video[:live] != 'none'
