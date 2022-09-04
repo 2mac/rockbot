@@ -67,3 +67,8 @@ URL titles
 This plugin scans incoming messages for URLs. If it finds one, it queries it
 and scans the contents for a title. If one is found, it puts that title into
 the channel for others to see before they click.
+
+YouTube
+-------
+
+This plugin adds a command to search for YouTube videos.
