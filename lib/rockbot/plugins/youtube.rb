@@ -37,7 +37,7 @@ module YoutubePlugin
   BASE_URL = 'https://www.googleapis.com/youtube/v3/'
   WATCH_URL = 'https://youtu.be/'
   TIME_RE = /P((?<d>\d+)D)?T((?<h>\d+)H)?((?<m>\d+)M)?(?<s>\d+)S/
-  YOUTUBE_URLS = /https?:\/\/(www\.)?youtu(\.be\/|be\.com\/(watch\?v=|shorts\/))(?<id>[^&]+)/
+  YOUTUBE_URLS = /https?:\/\/(www\.)?youtu(\.be\/|be\.com\/(watch\?v=|shorts\/))(?<id>[^?&]+)/
 
   class Fetcher
     attr_reader :pattern
