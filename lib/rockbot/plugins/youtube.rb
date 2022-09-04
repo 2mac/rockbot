@@ -79,8 +79,8 @@ module YoutubePlugin
     end
 
     def format(video, include_url=false)
-      result = Rockbot::IRC.format '<c:white,red> ▶ <c:black,white>YouTube<r>'
-      result << " - \x02#{video[:title]}\x02"
+      result = Rockbot::IRC.format '<c:white,red> ▶ <r>'
+      result << " \x02#{video[:title]}\x02"
 
       if video[:live] != 'none'
         result << Rockbot::IRC.format(" - <c:red><b>LIVE<r>")
@@ -126,7 +126,7 @@ module YoutubePlugin
       @key = config['youtube']['key'] unless @key
 
       m = YOUTUBE_URLS.match uri.to_s
-      format(details(m[:id]))
+      format(details(m[:id]), uri.path.start_with?('/shorts/'))
     end
 
     def load
