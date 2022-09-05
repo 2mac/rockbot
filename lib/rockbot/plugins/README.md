@@ -85,3 +85,8 @@ the configuration like so:
   }
 }
 ```
+
+Wikipedia
+---------
+
+This plugin adds a command to search for Wikipedia articles.
