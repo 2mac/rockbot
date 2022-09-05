@@ -132,7 +132,8 @@ module YoutubePlugin
     def load
       yt_cmd = Rockbot::Command.new('youtube', ['yt'],
                                     &YoutubePlugin.method(:lookup))
-      yt_cmd.help_text = ''
+      yt_cmd.help_text = "Search YouTube for a video.\n" +
+                         "Usage: youtube <query>"
       Rockbot::Command.add_command yt_cmd
 
       if Object.const_defined? 'UrlTitles'
