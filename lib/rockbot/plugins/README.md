@@ -61,6 +61,12 @@ rockbot will deliver all pending messages in private.
 
 Requires `database` to be configured.
 
+Urban Dictionary
+----------------
+
+The `urban` plugin adds a command to search the Urban Dictionary for slang
+terms.
+
 URL titles
 ----------
 
