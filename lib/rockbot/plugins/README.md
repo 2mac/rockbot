@@ -74,3 +74,14 @@ YouTube
 This plugin adds a command to search for YouTube videos. If loaded after the
 URL titles plugin, it will override the usual title with more details about
 YouTube video URLs.
+
+You must provide an API key in order to use this plugin. It should appear in
+the configuration like so:
+
+```
+{
+  "youtube": {
+    "key": "YOUR_API_KEY"
+  }
+}
+```
