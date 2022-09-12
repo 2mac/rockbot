@@ -33,7 +33,7 @@
 require 'cgi'
 
 module UrlTitles
-  URL_RE = /https?:\/\/\S+\.\S+>?/
+  URL_RE = /https?:\/\/\S+\.\S+/
   TITLE_RE = /<title>(?<title>.*?)<\/title>/m
   MAX_LENGTH = 100
   FETCHERS = []
@@ -83,7 +83,10 @@ module UrlTitles
           matches = URL_RE.match event.content
           if matches
             url = matches[0]
-            url.delete! '>'
+            if i = url.index('>')
+              url = url[0...i]
+            end
+
             Rockbot.log.debug { "Captured URL #{url}" }
 
             uri = URI(url)
