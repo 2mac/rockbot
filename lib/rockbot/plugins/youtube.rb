@@ -36,7 +36,7 @@ require 'json'
 module YoutubePlugin
   BASE_URL = 'https://www.googleapis.com/youtube/v3/'
   WATCH_URL = 'https://youtu.be/'
-  TIME_RE = /P((?<d>\d+)D)?T((?<h>\d+)H)?((?<m>\d+)M)?(?<s>\d+)S/
+  TIME_RE = /P((?<d>\d+)D)?T((?<h>\d+)H)?((?<m>\d+)M)?((?<s>\d+)S)?/
   YOUTUBE_URLS = /https?:\/\/(www\.)?youtu(\.be\/|be\.com\/(watch\?v=|shorts\/))(?<id>[^?&]+)/
 
   class << self
@@ -79,6 +79,7 @@ module YoutubePlugin
     end
 
     def format(video, include_url=false)
+      Rockbot.log.debug { "Formatting #{video}" }
       result = Rockbot::IRC.format '<c:white,red> ▶ <r>'
       result << " \x02#{video[:title]}\x02"
 
@@ -91,7 +92,10 @@ module YoutubePlugin
         time << "#{m[:d]}d " if m[:d]
         time << "#{m[:h]}h " if m[:h]
         time << "#{m[:m]}m " if m[:m]
-        time << "#{m[:s]}s\x02"
+        time << "#{m[:s]}s" if m[:s]
+
+        time.rstrip!
+        time << "\x02"
 
         result << time
       end
