@@ -32,7 +32,7 @@
 module SedPlugin
   RE = /^s\/(?<pattern>(\\\/|[^\/])+)\/(?<repl>(\\\/|[^\/])*)(\/(?<suffix>\w+)?)?/
   LOG = {}
-  MAX_LOG = 1000
+  MAX_LOG = 100
   MAX_RESULT = 360
 
   class << self
