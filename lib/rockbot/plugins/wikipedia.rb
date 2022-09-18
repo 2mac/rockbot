@@ -35,6 +35,7 @@ module WikiPlugin
   BASE_URL = 'https://en.wikipedia.org/'
   API_URL = BASE_URL + 'w/api.php?format=json&utf8=1&'
   PAGE_URL = BASE_URL + 'wiki/'
+  MAX_TEXT = 250
 
   class << self
     def request(params)
@@ -49,8 +50,7 @@ module WikiPlugin
         action: 'query',
         list: 'search',
         srsearch: title,
-        srlimit: 1,
-        srprop: 'snippet'
+        srlimit: 1
       }
 
       data = request params
@@ -58,10 +58,22 @@ module WikiPlugin
       return nil unless result
 
       result = {
+        id: result['pageid'],
         title: result['title'],
-        snippet: result['snippet'].gsub(/<.+?>/, ''),
-        page: PAGE_URL + result['title'].gsub(' ', '_')
+        url: PAGE_URL + result['title'].gsub(' ', '_')
       }
+
+      params = {
+        action: 'query',
+        prop: 'extracts',
+        pageids: result[:id],
+        exintro: '',
+        explaintext: '',
+        exchars: MAX_TEXT
+      }
+
+      data = request params
+      result[:text] = data.dig('query', 'pages', result[:id].to_s, 'extract')
 
       result
     end
@@ -72,9 +84,9 @@ module WikiPlugin
 
       if result
         title = result[:title]
-        text = result[:snippet]
-        page = result[:page]
-        response = "\x02#{title}\x02 : #{text} -- #{page}"
+        text = result[:text]
+        url = result[:url]
+        response = "\x02#{title}\x02 : #{text} -- #{url}"
       else
         response = "I couldn't find any results for that."
       end

@@ -112,6 +112,7 @@ module Rockbot
   # Returns a Net::HTTPResponse of the final result or raises
   # Net::ProtocolError.
   def self.get_uri(uri, redirect_limit=10)
+    Rockbot.log.debug { "Requesting #{uri.to_s}" }
     result = nil
 
     if redirect_limit == 0
