@@ -135,7 +135,24 @@ module Rockbot
     when Net::HTTPRedirection
       redirect = response['location']
       Rockbot.log.debug { "Redirected to #{redirect}" }
-      result = get_uri(URI(redirect), redirect_limit - 1)
+
+      if redirect.start_with? /https?:\/\//
+        uri = URI(redirect)
+      elsif redirect.start_with? '/'
+        uri.path = redirect
+      else
+        existing = uri.path[1..].split '/'
+        redirect = redirect.split '/'
+
+        while redirect.first == '..'
+          redirect.shift
+          existing.pop
+        end
+
+        uri.path = '/' + (existing + redirect).join('/')
+      end
+
+      result = get_uri(uri, redirect_limit - 1)
     else
       raise Net::ProtocolError, "HTTP #{response.code}"
     end
