@@ -144,6 +144,8 @@ module Rockbot
         existing = uri.path[1..].split '/'
         redirect = redirect.split '/'
 
+        existing.pop unless existing.end_with? '/'
+
         while redirect.first == '..'
           redirect.shift
           existing.pop
