@@ -38,6 +38,14 @@ module UrlTitles
   MAX_LENGTH = 100
   FETCHERS = []
 
+  ENTITY_RE = /&([a-z]+);/
+  ENTITY_MAP = {
+    'bull' => '•',
+    'horbar' => '―',
+    'mdash' => '—',
+    'ndash' => '–'
+  }
+
   class Fetcher
     attr_reader :pattern
 
@@ -57,6 +65,12 @@ module UrlTitles
       text = matches ? matches[:title].gsub(/(\R|&nbsp;)/,' ').strip : nil
       if text
         text = CGI.unescapeHTML(text).force_encoding(Encoding::UTF_8)
+
+        while matches = ENTITY_RE.match(text)
+          decoded = ENTITY_MAP[matches[1]] || '?'
+          text.gsub!(matches[0], decoded)
+        end
+
         if text.length > MAX_LENGTH
           text = text[0, MAX_LENGTH]
           index = text.rindex ' '
