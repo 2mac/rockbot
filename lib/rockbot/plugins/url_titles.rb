@@ -79,7 +79,8 @@ module UrlTitles
         end
       end
 
-      text
+      text.strip!
+      text.empty? ? nil : text
     end
 
     def fetch(uri)
@@ -88,7 +89,7 @@ module UrlTitles
       Rockbot.log.debug { "type=#{type}" }
       text = title response.body if type.include? 'text/html'
 
-      text ? Rockbot::IRC.format("<b>#{text}</b>") : nil
+      text ? Rockbot::IRC.format("<b>#{text}</b>") : 'No title found'
     end
 
     def load
