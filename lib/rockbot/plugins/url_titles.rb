@@ -77,10 +77,12 @@ module UrlTitles
           text = text[0, index] if index
           text << '…'
         end
+
+        text.strip!
+        text = nil if text.empty?
       end
 
-      text.strip!
-      text.empty? ? nil : text
+      text
     end
 
     def fetch(uri)
