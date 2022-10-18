@@ -87,9 +87,12 @@ module UrlTitles
       response = Rockbot.get_uri uri
       type = response['Content-Type']
       Rockbot.log.debug { "type=#{type}" }
-      text = title response.body if type.include? 'text/html'
+      if type.include? 'text/html'
+        text = title response.body
+        text = text ? Rockbot::IRC.format("<b>#{text}</b>") : 'No title found'
+      end
 
-      text ? Rockbot::IRC.format("<b>#{text}</b>") : 'No title found'
+      text
     end
 
     def load
