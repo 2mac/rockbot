@@ -41,7 +41,7 @@ ART = <<'EOF'
 EOF
 
 APP_NAME = 'rockbot'
-APP_VERSION = '1.1'
+APP_VERSION = '1.1.1'
 APP_REPO = 'https://github.com/2mac/rockbot'
 
 config_path = ARGV.shift || 'rockbot.json'

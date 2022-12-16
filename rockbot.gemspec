@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = "rockbot"
-  s.version     = "1.1"
+  s.version     = "1.1.1"
   s.summary     = "Extensible IRC bot"
   s.authors     = ["David McMackins II"]
   s.files       = Dir["lib/**/*.rb", "bin/*"]
