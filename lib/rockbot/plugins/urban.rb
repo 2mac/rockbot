@@ -61,7 +61,7 @@ module UrbanPlugin
 
       if result
         word = result[:word]
-        definition = result[:definition]
+        definition = result[:definition].strip.gsub(/\R+/, ' // ')
         url = result[:url]
         response = "\x02#{word}\x02 : #{definition} -- #{url}"
       else
