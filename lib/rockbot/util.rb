@@ -111,7 +111,7 @@ module Rockbot
   #
   # Returns a Net::HTTPResponse of the final result or raises
   # Net::ProtocolError.
-  def self.get_uri(uri, redirect_limit=10)
+  def self.get_uri(uri, redirect_limit=10, body_limit=1000000)
     Rockbot.log.debug { "Requesting #{uri.to_s}" }
     result = nil
 
@@ -126,7 +126,19 @@ module Rockbot
 
     request = Net::HTTP::Get.new uri
     request['User-Agent'] = 'Mozilla/5.0 (compatible; rockbot/1.0)'
-    response = http.request request
+    response = nil
+    http.request(request) do |res|
+      response = res
+      body = ''
+
+      res.read_body do |segment|
+        body << segment
+        Rockbot.log.debug { "body length=#{body.length}" }
+        break if body.length > body_limit
+      end
+
+      res.body = body
+    end
 
     Rockbot.log.debug { "Response code #{response.code}" }
     case response
