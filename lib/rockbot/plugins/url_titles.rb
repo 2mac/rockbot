@@ -109,7 +109,7 @@ module UrlTitles
 
             Rockbot.log.debug { "Captured URL #{url}" }
 
-            uri = URI(url)
+            uri = Rockbot.format_uri(url)
 
             begin
               response = nil

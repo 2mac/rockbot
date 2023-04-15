@@ -40,7 +40,7 @@ module WikiPlugin
   class << self
     def request(params)
       params = params.map { |k,v| "#{k.to_s}=#{v}" }
-      uri = URI(API_URL + params.join('&'))
+      uri = Rockbot.format_uri(API_URL + params.join('&'))
       response = Rockbot.get_uri(uri)
       JSON.parse response.body
     end

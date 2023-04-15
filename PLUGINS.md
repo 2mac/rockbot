@@ -124,6 +124,9 @@ HTTP
 If your plugin requires an HTTP GET request, pass a `URI` to `Rockbot.get_uri`,
 which will account for HTTP redirects and has a request timeout.
 
+The method `Rockbot.format_uri` can be used to automatically escape illegal
+characters when converting a string to a URI.
+
 Text Formatting
 ---------------
 

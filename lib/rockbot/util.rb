@@ -106,6 +106,21 @@ module Rockbot
   end
 
   ##
+  # Converts a string to a URI, escaping any illegal characters.
+  #
+  # Returns a URI object for the given string.
+  def self.format_uri(s)
+    re = /[^A-Za-z0-9\-._~:\/?#\[\]@!$&'()*+,;=]/
+    chars = s.chars
+
+    chars.map! do |c|
+      (re =~ c) ? c.bytes.map { |b| "%#{b.to_s(16).upcase}" } : c
+    end
+
+    URI(chars.join)
+  end
+
+  ##
   # Performs an HTTP GET request for the given URI, following redirections up
   # to _redirect_\__limit_ times.
   #

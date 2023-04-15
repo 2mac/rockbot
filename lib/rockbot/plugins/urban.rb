@@ -39,7 +39,7 @@ module UrbanPlugin
       params = params.map { |k,v| "#{k.to_s}=#{v}" }
       url = "#{BASE_URL}#{type}?#{params.join('&')}"
 
-      response = Rockbot.get_uri URI(url)
+      response = Rockbot.get_uri Rockbot.format_uri(url)
       JSON.parse(response.body)
     end
 
