@@ -30,6 +30,7 @@
 ##
 
 require 'json'
+require 'pathname'
 
 module Rockbot
   ##
@@ -116,6 +117,10 @@ module Rockbot
       end
 
       result
+    end
+
+    def dir # :nodoc:
+      Pathname.new(@path).dirname.realpath
     end
 
     ##

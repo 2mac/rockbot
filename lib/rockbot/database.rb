@@ -35,9 +35,11 @@ require_relative 'util'
 
 module Rockbot
   def self.init_db(config) # :nodoc:
+    config_dir = config.dir
     config = config['database']
     if config.instance_of? String
-      config = { 'type' => 'sqlite', 'database' => config }
+      path = Rockbot.resolve_relative config, config_dir
+      config = { 'type' => 'sqlite', 'database' => path }
     end
 
     @database = Sequel.connect(

@@ -55,7 +55,7 @@ module Rockbot
     paths.each do |path|
       dir = Pathname.new(path)
       unless dir.absolute?
-        dir = Rockbot.resolve_relative dir
+        dir = Rockbot.resolve_relative dir, config.dir
       end
 
       plugin_file = dir.join(plugin_name)

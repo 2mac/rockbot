@@ -94,9 +94,10 @@ module Rockbot
 
   ##
   # Gets the absolute path in relation to the root of the project.
-  def self.resolve_relative(path)
+  def self.resolve_relative(path, rel_to=ROOT_DIR)
     path = Pathname.new path unless path.kind_of? Pathname
-    path.absolute? ? path : ROOT_DIR.join(path)
+    rel_to = Pathname.new rel_to unless rel_to.kind_of? Pathname
+    path.absolute? ? path : rel_to.join(path)
   end
 
   ##
