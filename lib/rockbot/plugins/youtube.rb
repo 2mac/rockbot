@@ -120,8 +120,12 @@ module YoutubePlugin
       return if title.empty?
 
       result = search title
-      video = details result
-      response = format(video, true)
+      if result
+        video = details result
+        response = format(video, true)
+      else
+        response = "No results found"
+      end
 
       server.send_msg(event.channel, "(#{event.source.nick}) #{response}")
     end
