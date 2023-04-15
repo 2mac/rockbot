@@ -1,6 +1,6 @@
 ##
 ##  rockbot - yet another extensible IRC bot written in Ruby
-##  Copyright (C) 2022 David McMackins II
+##  Copyright (C) 2022-2023 David McMackins II
 ##
 ##  Redistributions, modified or unmodified, in whole or in part, must retain
 ##  applicable notices of copyright or other legal privilege, these conditions,
@@ -137,6 +137,8 @@ module TellPlugin
             event.source.nick,
             "Your message has been saved, and #{args[0]} will be notified upon their return."
           )
+        else
+          server.send_notice(event.source.nick, "Usage: tell <nick> <message>")
         end
       else
         server.send_msg(event.source.nick, "You can only use 'tell' in a channel.")
