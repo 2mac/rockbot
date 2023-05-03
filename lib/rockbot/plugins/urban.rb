@@ -33,6 +33,7 @@ require 'json'
 
 module UrbanPlugin
   BASE_URL = 'https://api.urbandictionary.com/v0/'
+  MAX_LENGTH = 300
 
   class << self
     def request(type, params)
@@ -63,6 +64,14 @@ module UrbanPlugin
         word = result[:word]
         definition = result[:definition].strip.gsub(/\R+/, ' // ')
         url = result[:url]
+
+        if definition.length > MAX_LENGTH
+          definition = definition[0, MAX_LENGTH]
+          index = definition.rindex ' '
+          definition = definition[0, index] if index
+          definition << '… (truncated)'
+        end
+        
         response = "\x02#{word}\x02 : #{definition} -- #{url}"
       else
         response = "We ain't found shit."
